@@ -16,7 +16,7 @@ const main = document.body.children[1];
  * @arg {string} pathname
  * @typedef {{title: string, done: boolean}} Task
  */
-async function getTasks(pathname) {
+async function showTasks(pathname) {
   /** @type {Task[]} */
   const tasks = await (await fetch("/data" + pathname)).json();
   main.replaceChildren(...tasks.map(t => {
@@ -27,12 +27,19 @@ async function getTasks(pathname) {
 }
 
 // function renderTask(task) {
+//   const p = document.createElement('p');
 //   const update = {
 //     title(v) {
 //       p.textContent = v;
 //     },
 
-//     done(v) {}
+//     done(v) {
+//       if (v) {
+//         p.classList.add("done");
+//       } else {
+//         p.classList.remove("done");
+//       }
+//     }
 //   };
 // }
 
@@ -41,7 +48,7 @@ const activate = getSwapper(map.get(location.pathname));
 const navigate = getNavigator("drawer", undefined, () => {
   const {pathname} = location;
   activate(map.get(pathname));
-  getTasks(pathname);
+  showTasks(pathname);
 });
 
 nav.addEventListener("click", (event) => {
@@ -51,6 +58,6 @@ nav.addEventListener("click", (event) => {
 
   event.preventDefault();
   activate(link);
-  getTasks(link.pathname);
+  showTasks(link.pathname);
   navigate(link.href);
 });
