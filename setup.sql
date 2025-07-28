@@ -1,4 +1,5 @@
 CREATE DATABASE duit;
+\c duit;
 
 CREATE TABLE projects (
     id serial PRIMARY KEY NOT NULL,

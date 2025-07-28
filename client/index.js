@@ -4,7 +4,7 @@ import { getSwapper } from "./js/domutils.js";
 const nav = document.body.firstElementChild.shadowRoot;
 const {children} = nav;
 
-const map = new Map();
+const map = new Map(); // associate anchor elements to URL paths
 for (let i = 1; i < children.length; i++) { // Skips <style> element
   const link = children[i];
   map.set(link.pathname, link);
@@ -25,23 +25,6 @@ async function showTasks(pathname) {
     return p;
   }));
 }
-
-// function renderTask(task) {
-//   const p = document.createElement('p');
-//   const update = {
-//     title(v) {
-//       p.textContent = v;
-//     },
-
-//     done(v) {
-//       if (v) {
-//         p.classList.add("done");
-//       } else {
-//         p.classList.remove("done");
-//       }
-//     }
-//   };
-// }
 
 const activate = getSwapper(map.get(location.pathname));
 
