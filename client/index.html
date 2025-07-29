@@ -1,62 +1,86 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-	<title>Duit</title>
-	<link rel="icon" href="static/favicon.ico" />
-	<link rel="stylesheet" href="static/reset.css">
-	<link rel="stylesheet" href="static/colours.css">
-	<script src="static/js/nav.js" type="module"></script>
-	<script src="static/js/domutils.js" type="module"></script>
-	<script src="static/index.js" type="module"></script>
-</head>
-<body style="
-    background-color: var(--background);
-    color: white;
-    font-family: Arial, Helvetica, sans-serif;
-    display: flex;
-">
-    <nav style="
+    <title>Duit</title>
+    <link rel="icon" href="static/favicon.ico" />
+    <link rel="stylesheet" href="static/reset.css" />
+    <link rel="stylesheet" href="static/colours.css" />
+    <script src="static/js/nav.js" type="module"></script>
+    <script src="static/js/domutils.js" type="module"></script>
+    <script src="static/index.js" type="module"></script>
+  </head>
+  <body
+    style="
+      background-color: var(--background);
+      color: white;
+      font-family: Arial, Helvetica, sans-serif;
+      display: flex;
+    "
+  >
+    <style>
+      hr {
+        width: 100%;
+        max-width: 20rem;
+        border: none;
+        border-top: 1px solid #FFF;
+        margin: 1rem 0;
+      }
+    </style>
+    <nav
+      style="
         background-color: var(--surface);
         width: 18rem;
         height: 100dvh;
         padding: 0.75rem;
         display: flex;
         flex-direction: column;
-    ">
-        <template shadowrootmode="open">
-            <style>
-                a {
-                    border-radius: 0.4rem;
-                    padding: 0.4rem;
-                    font-size: 0.9rem;
-                    color: inherit;
-                    text-decoration: none;
+      "
+    >
+      <template shadowrootmode="open">
+        <style>
+          a {
+            border-radius: 0.4rem;
+            padding: 0.4rem;
+            font-size: 0.9rem;
+            color: inherit;
+            text-decoration: none;
 
-                    &:hover {
-                        background-color: var(--secondary-container);
-                    }
+            &:hover {
+              background-color: var(--secondary-container);
+            }
 
-                    &.active {
-                        background-color: var(--primary-container);
-                        color: var(--primary);
-                    }
-                }
-            </style>
+            &.active {
+              background-color: var(--primary-container);
+              color: var(--primary);
+            }
+          }
+        </style>
 
-            {{$activeId := .ActiveId}}
-            {{range .Projects}}
-                <a href="/{{.Id}}" {{if eq .Id $activeId}}class="active"{{end}}>{{.Name}}</a>
-            {{end}}
-        </template>
+        {{$activeId := .ActiveId}} {{range .Projects}}
+        <a href="/{{.Id}}" {{if eq .Id $activeId}}class="active" {{end}}
+          >{{.Name}}</a
+        >
+        {{end}}
+      </template>
     </nav>
 
-    <main>
-        {{range .Tasks}}
-            <p>{{.Title}}</p>
-        {{end}}
+    <main
+      style="
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+      "
+    >
+      {{range .Tasks}}
+      <p>{{.Title}}</p>
+      <hr />
+      {{end}}
     </main>
-</body>
+  </body>
 </html>
