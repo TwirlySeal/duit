@@ -6,10 +6,8 @@
 
 	<title>Duit</title>
 	<link rel="icon" href="static/favicon.ico" />
-	<link rel="stylesheet" href="static/reset.css">
 	<link rel="stylesheet" href="static/colours.css">
-	<script src="static/js/nav.js" type="module"></script>
-	<script src="static/js/domutils.js" type="module"></script>
+	{{block "reset" .}}<link rel="stylesheet" href="static/reset.css">{{end}}
 	<script src="static/index.js" type="module"></script>
 </head>
 <body style="
@@ -20,13 +18,15 @@
 ">
     <nav style="
         background-color: var(--surface);
-        width: 18rem;
+        flex-grow: 1;
+        max-width: 18rem;
         height: 100dvh;
         padding: 0.75rem;
         display: flex;
         flex-direction: column;
     ">
         <template shadowrootmode="open">
+            {{template "reset"}}
             <style>
                 a {
                     border-radius: 0.4rem;
@@ -53,10 +53,77 @@
         </template>
     </nav>
 
-    <main>
-        {{range .Tasks}}
-            <p>{{.Title}}</p>
-        {{end}}
+    <main style="
+        flex-grow: 2;
+        display: flex;
+        justify-content: center;
+    ">
+        <template shadowrootmode="open">
+            {{template "reset"}}
+
+            <style>
+                li {
+                    list-style-type: none;
+                    padding: 0.5rem 0rem;
+                    display: flex;
+                    align-items: center;
+                    gap: 0.5rem;
+
+                    &:not(:last-child) {
+                        border-bottom: 1px solid #3d3d3d;
+                    }
+                }
+
+                .check {
+                    height: 1.2rem;
+                    width: 1.2rem;
+                    flex-shrink: 0;
+                    border: 1px solid gray;
+                    border-radius: 50%;
+                }
+
+                :is(#add-button, #add-area):not(.active) {
+                    display: none;
+                }
+
+                #add-button:hover {
+                    color: var(--primary);
+                }
+            </style>
+
+            <template id="templ">
+                <li>
+                    <button class="check"></button>
+                    <p></p>
+                </li>
+            </template>
+
+            <ul id="tasks" style="
+                flex-grow: 1;
+                padding: 1rem;
+                margin: 0;
+                max-width: 80ch;
+            ">
+                {{range .Tasks}}
+                    <li>
+                        <button class="check"></button>
+                        <p>{{.Title}}</p>
+                    </li>
+                {{end}}
+
+                <li>
+                    <button id="add-button" class="active">Add task</button>
+                    <input id="add-area" placeholder="Task name" style="
+                        background-color: transparent;
+                        color: inherit;
+                        border: 1px solid gray;
+                        border-radius: 0.2rem;
+                        padding: 0.2rem;
+                        flex-grow: 1;
+                    "></input>
+                </li>
+            </ul>
+        </template>
     </main>
 </body>
 </html>

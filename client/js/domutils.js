@@ -14,13 +14,17 @@ export function getSwapper(active) {
   };
 }
 
-export function render(element, data) {
-  for (const [key, value] of Object.entries(data)) {
-    element.querySelector(`[data-bind="${key}"]`).textContent = value;
-  }
-  return element;
+export function getTemplate(el) {
+  return () => el.content.cloneNode(true);
 }
 
-export function getTemplate(template) {
-  return (data) => render(template.content.cloneNode(true), data);
-}
+// export function render(element, data) {
+//   for (const [key, value] of Object.entries(data)) {
+//     element.querySelector(`[data-bind="${key}"]`).textContent = value;
+//   }
+//   return element;
+// }
+
+// export function getTemplate(template) {
+//   return (data) => render(template.content.cloneNode(true), data);
+// }

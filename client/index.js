@@ -1,5 +1,6 @@
 import { defaultInteraction, getNavigator } from "./js/nav.js";
 import { getSwapper } from "./js/domutils.js";
+import { replaceTasks } from "./tasks.js";
 
 const nav = document.body.firstElementChild.shadowRoot;
 const {children} = nav;
@@ -10,28 +11,12 @@ for (let i = 1; i < children.length; i++) { // Skips <style> element
   map.set(link.pathname, link);
 }
 
-const main = document.body.children[1];
-
-/**
- * @arg {string} pathname
- * @typedef {{title: string, done: boolean}} Task
- */
-async function showTasks(pathname) {
-  /** @type {Task[]} */
-  const tasks = await (await fetch("/data" + pathname)).json();
-  main.replaceChildren(...tasks.map(t => {
-    const p = document.createElement('p');
-    p.textContent = t.title;
-    return p;
-  }));
-}
-
 const activate = getSwapper(map.get(location.pathname));
 
 const navigate = getNavigator("drawer", undefined, () => {
   const {pathname} = location;
   activate(map.get(pathname));
-  showTasks(pathname);
+  replaceTasks(pathname);
 });
 
 nav.addEventListener("click", (event) => {
@@ -41,6 +26,6 @@ nav.addEventListener("click", (event) => {
 
   event.preventDefault();
   activate(link);
-  showTasks(link.pathname);
+  replaceTasks(link.pathname);
   navigate(link.href);
 });
