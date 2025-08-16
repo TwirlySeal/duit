@@ -27,7 +27,7 @@ func main() {
 	defer dbpool.Close()
 
 	mux := http.NewServeMux()
-	tmpl := template.Must(template.ParseFiles("client/index.html"))
+	tmpl := template.Must(template.ParseFiles("../client/index.html"))
 
 	mux.HandleFunc("GET /{id}", func(w http.ResponseWriter, r *http.Request) {
 		id := r.PathValue("id")
@@ -60,7 +60,7 @@ func main() {
 		w.Write(response) // todo: handle err
 	})
 
-	mux.Handle("GET /static/", http.StripPrefix("/static/", http.FileServer(http.Dir("client"))))
+	mux.Handle("GET /static/", http.StripPrefix("/static/", http.FileServer(http.Dir("../client"))))
 
 	log.Fatal(http.ListenAndServe(":8080", mux))
 }
