@@ -1,6 +1,5 @@
 # Windows first setup
-1. Install Scoop from https://scoop.sh/.
-- Scoop is a package manager for Windows that automates installing programs and manages your PATH for you.
+1. Install Scoop from https://scoop.sh/. Scoop is a package manager for Windows that automates installing programs and manages your PATH for you.
 
 ----
 
