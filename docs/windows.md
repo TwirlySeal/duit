@@ -44,9 +44,12 @@ psql -U postgres -f .\setup.sql
 $env:POSTGRES_URL = "postgres://postgres@localhost/duit"
 ```
 
-Optional: Save this command as a script in the `scripts` directory (which has been added to `.gitignore`). Write it into a file called `postgres_url.ps1` then run it like this:
-```zsh
-. .\postgres_url.ps1
+Optional: Save this step as a script.
+  1. Create a `scripts` directory in the root of the project (it is in `.gitignore`).
+  2. Inside `scripts`, write the command to a file called `postgres_url.ps1`.
+  3. Run the script like this:
+```powershell
+. .\scripts\postgres_url.ps1
 ```
 
 ----

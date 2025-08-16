@@ -47,9 +47,16 @@ psql postgres -f setup.sql
 export POSTGRES_URL="postgres://localhost/duit"
 ```
 
-Optional: Save this command as a script in the `scripts` directory (which has been added to `.gitignore`). Write it into a file called `postgres_url` then run it like this:
+Optional: Save this step as a script.
+  1. Create a `scripts` directory in the root of the project (it is in `.gitignore`).
+  2. Inside `scripts`, write the command to a file called `postgres_url` (a file extension is not needed).
+  3. Make the file executable.
+  ```zsh
+  chmod +x scripts/postgres_url
+  ```
+  4. Run the script like this:
 ```zsh
-source postgres_url
+source scripts/postgres_url
 ```
 
 ----
