@@ -1,5 +1,4 @@
-# Getting started
-## Technical overview
+# Project overview
 - Server: [Go](https://go.dev) (Golang)
 - Client: HTML, CSS, and JavaScript
   - [MDN Web Docs](https://developer.mozilla.org/en-US/)
