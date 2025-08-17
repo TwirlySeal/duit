@@ -42,3 +42,8 @@ button {
     color: inherit;
     font-size: inherit;
 }
+
+ul {
+    padding: 0;
+    li { list-style-type: none; }
+}

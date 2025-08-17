@@ -2,14 +2,14 @@ import { getSwapper, getTemplate } from "./js/domutils.js";
 
 const main = document.querySelector('main').shadowRoot;
 
-const taskTempl = getTemplate(main.getElementById('templ'));
+const taskTempl = getTemplate(main.querySelector('template'));
 function taskView(name) {
   const clone = taskTempl();
   clone.querySelector('p').textContent = name;
   return clone;
 }
 
-const tasks = main.getElementById('tasks');
+const taskList = main.getElementById('task-list');
 
 /**
  * @arg {string} pathname
@@ -18,7 +18,7 @@ const tasks = main.getElementById('tasks');
 export async function replaceTasks(pathname) {
   /** @type {Task[]} */
   const data = await (await fetch("/data" + pathname)).json();
-  tasks.replaceChildren(...data.map(t => taskView(t.title)));
+  taskList.replaceChildren(...data.map(t => taskView(t.title)));
 }
 
 const addButton = main.getElementById("add-button");
@@ -31,11 +31,15 @@ addButton.addEventListener('click', () => {
 });
 
 addArea.addEventListener('keydown', event => {
-  if (event.key === "Enter") {
-    tasks.lastElementChild.before(taskView(addArea.value));
-    addArea.value = "";
-  } else if (event.key === 'Escape') {
-    activate(addButton);
-    addArea.value = "";
+  switch (event.key) {
+    case "Enter":
+      taskList.append(taskView(addArea.value));
+      addArea.value = "";
+      break;
+
+    case "Escape":
+      activate(addButton);
+      addArea.value = "";
+      break;
   }
 });

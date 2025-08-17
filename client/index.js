@@ -2,12 +2,11 @@ import { defaultInteraction, getNavigator } from "./js/nav.js";
 import { getSwapper } from "./js/domutils.js";
 import { replaceTasks } from "./tasks.js";
 
-const nav = document.body.firstElementChild.shadowRoot;
+const nav = document.querySelector('nav').shadowRoot.querySelector('ul');
 const {children} = nav;
 
 const map = new Map(); // associate anchor elements to URL paths
-for (let i = 1; i < children.length; i++) { // Skips <style> element
-  const link = children[i];
+for (const {firstElementChild: link} of children) {
   map.set(link.pathname, link);
 }
 
