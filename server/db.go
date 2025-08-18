@@ -9,22 +9,22 @@ import (
 
 type Task struct {
 	Title string `json:"title"`
-	Done bool `json:"done"`
+	Done  bool   `json:"done"`
 }
 
 type Project struct {
 	Name string
-	Id string
+	Id   string
 }
 
 const tasksQuery string = "SELECT title, done FROM tasks WHERE project_id=$1"
 
-func homeData(dbpool *pgxpool.Pool, ctx context.Context, id string) ([]Project, []Task, error) {
+func homeData(dbPool *pgxpool.Pool, ctx context.Context, id string) ([]Project, []Task, error) {
 	batch := pgx.Batch{}
 	batch.Queue("SELECT * FROM projects")
 	batch.Queue(tasksQuery, id)
 
-	results := dbpool.SendBatch(ctx, &batch)
+	results := dbPool.SendBatch(ctx, &batch)
 	defer results.Close()
 
 	projects, err := load[Project](results)
@@ -50,8 +50,8 @@ func load[T any](results pgx.BatchResults) ([]T, error) {
 	return pgx.CollectRows[T](rows, pgx.RowToStructByName)
 }
 
-func getTasks(dbpool *pgxpool.Pool, ctx context.Context, id string) ([]Task, error) {
-	rows, err := dbpool.Query(ctx, tasksQuery, id)
+func getTasks(dbPool *pgxpool.Pool, ctx context.Context, id string) ([]Task, error) {
+	rows, err := dbPool.Query(ctx, tasksQuery, id)
 	if err != nil {
 		return nil, err
 	}
