@@ -3,16 +3,16 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"html/template"
 	"log"
 	"net/http"
 	"os"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type PageData struct {
 	Projects []Project
-	Tasks []Task
+	Tasks    []Task
 	ActiveId string
 }
 
@@ -33,32 +33,41 @@ func main() {
 	mux.HandleFunc("GET /{id}", func(w http.ResponseWriter, r *http.Request) {
 		id := r.PathValue("id")
 
-		projects, tasks, err := homeData(dbpool, r.Context(), id) // todo: handle err
+		projects, tasks, err := homeData(dbpool, r.Context(), id)
 		if err != nil {
 			internalErr(w, err)
 			return
 		}
 
-		tmpl.Execute(w, PageData{
+		err = tmpl.Execute(w, PageData{
 			projects,
 			tasks,
 			id,
-		}) // todo: handle err
+		})
+		if err != nil {
+			internalErr(w, err)
+			return
+		}
 	})
 
 	mux.HandleFunc("GET /data/{id}", func(w http.ResponseWriter, r *http.Request) {
-		tasks, err := getTasks(dbpool, r.Context(), r.PathValue("id")) // todo: handle err
+		tasks, err := getTasks(dbpool, r.Context(), r.PathValue("id"))
 		if err != nil {
 			internalErr(w, err)
 			return
 		}
 
-		response, err := json.Marshal(tasks) // todo: handle err
+		response, err := json.Marshal(tasks)
 		if err != nil {
 			internalErr(w, err)
 			return
 		}
-		w.Write(response) // todo: handle err
+
+		_, err = w.Write(response)
+		if err != nil {
+			internalErr(w, err)
+			return
+		}
 	})
 
 	mux.Handle("GET /static/", http.StripPrefix("/static/", http.FileServer(http.Dir("../client"))))

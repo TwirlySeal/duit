@@ -25,7 +25,12 @@ func homeData(dbPool *pgxpool.Pool, ctx context.Context, id string) ([]Project, 
 	batch.Queue(tasksQuery, id)
 
 	results := dbPool.SendBatch(ctx, &batch)
-	defer results.Close()
+	defer func(results pgx.BatchResults) {
+		err := results.Close()
+		if err != nil {
+			panic(err)
+		}
+	}(results)
 
 	projects, err := load[Project](results)
 	if err != nil {
