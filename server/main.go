@@ -21,11 +21,11 @@ func internalErr(w http.ResponseWriter, err error) {
 }
 
 func main() {
-	dbpool, err := pgxpool.New(context.Background(), os.Getenv("POSTGRES_URL"))
+	dbPool, err := pgxpool.New(context.Background(), os.Getenv("POSTGRES_URL"))
 	if err != nil {
 		log.Fatalf("Unable to connect to database: %v\n", err)
 	}
-	defer dbpool.Close()
+	defer dbPool.Close()
 
 	mux := http.NewServeMux()
 	tmpl := template.Must(template.ParseFiles("../client/index.html"))
@@ -33,7 +33,7 @@ func main() {
 	mux.HandleFunc("GET /{id}", func(w http.ResponseWriter, r *http.Request) {
 		id := r.PathValue("id")
 
-		projects, tasks, err := homeData(dbpool, r.Context(), id)
+		projects, tasks, err := homeData(dbPool, r.Context(), id)
 		if err != nil {
 			internalErr(w, err)
 			return
@@ -51,7 +51,7 @@ func main() {
 	})
 
 	mux.HandleFunc("GET /data/{id}", func(w http.ResponseWriter, r *http.Request) {
-		tasks, err := getTasks(dbpool, r.Context(), r.PathValue("id"))
+		tasks, err := getTasks(dbPool, r.Context(), r.PathValue("id"))
 		if err != nil {
 			internalErr(w, err)
 			return
