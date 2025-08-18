@@ -34,12 +34,12 @@ func homeData(dbPool *pgxpool.Pool, ctx context.Context, id string) ([]Project, 
 
 	projects, err := load[Project](results)
 	if err != nil {
-		return nil, nil, fmt.Errorf("Error getting projects: %w", err)
+		return nil, nil, fmt.Errorf("error getting projects: %w", err)
 	}
 
 	tasks, err := load[Task](results)
 	if err != nil {
-		return nil, nil, fmt.Errorf("Error getting tasks: %w", err)
+		return nil, nil, fmt.Errorf("error getting tasks: %w", err)
 	}
 
 	return projects, tasks, nil
