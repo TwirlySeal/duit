@@ -7,11 +7,13 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"os"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type PageData struct {
 	Projects []Project
-	Tasks    []Task
+	Tasks []Task
 	ActiveId string
 }
 
@@ -20,7 +22,7 @@ func internalErr(w http.ResponseWriter, err error) {
 }
 
 func main() {
-	dbpool, err := pgxpool.New(context.Background(), "postgres://postgres:admin@localhost:5432/duit?sslmode=disable") // todo: use os.Getenv()
+	dbpool, err := pgxpool.New(context.Background(), os.Getenv("POSTGRES_URL"))
 	if err != nil {
 		log.Fatalf("Unable to connect to database: %v\n", err)
 	}

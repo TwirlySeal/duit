@@ -1,7 +1,10 @@
 :root {
-    --surface: #262626;
-    --background: #1E1E1E;
-    --primary-container: #472525;
-    --primary: #f07f75;
-    --secondary-container: #322F2A;
+    --surface: oklch(27% 0 25deg);
+    --background: oklch(24% 0 25deg);
+    --primary-container: oklch(32% 0.06 25deg);
+    --primary-glyph: oklch(74% 0.15 25deg);
+    --primary-action: oklch(62% 0.18 25deg);
+    --secondary-container: oklch(31% 0.01 81deg);
+    --outline: oklch(45% 0 0deg);
+    --outline-variant: oklch(36% 0 0deg);
 }
