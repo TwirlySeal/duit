@@ -3,15 +3,15 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"html/template"
 	"log"
 	"net/http"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type PageData struct {
 	Projects []Project
-	Tasks []Task
+	Tasks    []Task
 	ActiveId string
 }
 
@@ -20,7 +20,7 @@ func internalErr(w http.ResponseWriter, err error) {
 }
 
 func main() {
-	dbpool, err := pgxpool.New(context.Background(), "postgres://localhost/duit") // todo: use os.Getenv()
+	dbpool, err := pgxpool.New(context.Background(), "postgres://postgres:admin@localhost:5432/duit?sslmode=disable") // todo: use os.Getenv()
 	if err != nil {
 		log.Fatalf("Unable to connect to database: %v\n", err)
 	}
