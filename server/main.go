@@ -17,7 +17,7 @@ type PageData struct {
 }
 
 type NewTask struct {
-	Name string
+	Name      string
 	ProjectId string
 }
 
@@ -77,18 +77,19 @@ func main() {
 
 	mux.HandleFunc("POST /addTask", func(w http.ResponseWriter, r *http.Request) {
 		var task NewTask
-		json.NewDecoder(r.Body).Decode(&task)
+		err := json.NewDecoder(r.Body).Decode(&task)
 		if err != nil {
 			internalErr(w, err)
 			return
 		}
 
-		err := addTask(dbpool, r.Context(), task)
+		err = addTask(dbPool, r.Context(), task)
 		if err != nil {
 			internalErr(w, err)
 			return
 		}
 
+		w.Header().Set("Location", "/"+task.ProjectId+"/"+task.Name)
 		w.WriteHeader(http.StatusCreated)
 	})
 
