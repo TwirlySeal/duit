@@ -17,8 +17,14 @@ type PageData struct {
 	ActiveId string
 }
 
+type NewTask struct {
+	Name string
+	ProjectId string
+}
+
 func internalErr(w http.ResponseWriter, err error) {
-	http.Error(w, err.Error(), http.StatusInternalServerError)
+	w.WriteHeader(http.StatusInternalServerError)
+	log.Println(err)
 }
 
 func main() {
@@ -42,11 +48,14 @@ func main() {
 			return
 		}
 
-		tmpl.Execute(w, PageData{
+		err = tmpl.Execute(w, PageData{
 			projects,
 			tasks,
 			id,
-		}) // todo: handle err
+		})
+		if err != nil {
+			log.Println(err)
+		}
 	})
 
 	mux.HandleFunc("GET /data/{id}", func(w http.ResponseWriter, r *http.Request) {
@@ -56,12 +65,34 @@ func main() {
 			return
 		}
 
-		response, err := json.Marshal(tasks) // todo: handle err
+		response, err := json.Marshal(tasks)
 		if err != nil {
 			internalErr(w, err)
 			return
 		}
-		w.Write(response) // todo: handle err
+
+		_, err = w.Write(response)
+		if err != nil {
+			log.Println(err)
+			return
+		}
+	})
+
+	mux.HandleFunc("POST /addTask", func(w http.ResponseWriter, r *http.Request) {
+		var task NewTask
+		json.NewDecoder(r.Body).Decode(&task)
+		if err != nil {
+			internalErr(w, err)
+			return
+		}
+
+		err := addTask(dbpool, r.Context(), task)
+		if err != nil {
+			internalErr(w, err)
+			return
+		}
+
+		w.WriteHeader(http.StatusCreated)
 	})
 
 	mux.Handle("GET /static/", http.StripPrefix("/static/", http.FileServer(http.Dir("../client"))))

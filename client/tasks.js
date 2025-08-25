@@ -17,8 +17,30 @@ const taskList = main.getElementById('task-list');
  */
 export async function replaceTasks(pathname) {
   /** @type {Task[]} */
+  setProjectId(pathname);
   const data = await (await fetch("/data" + pathname)).json();
   taskList.replaceChildren(...data.map(t => taskView(t.title)));
+}
+
+let projectId;
+function setProjectId(pathname) {
+  projectId = pathname.split('/')[1];
+}
+setProjectId(location.pathname);
+
+/**
+ * @arg {string} name
+ */
+function addTask(name) {
+  fetch("/addTask", {
+    method: "POST",
+    body: JSON.stringify({
+      name,
+      projectId
+    })
+  });
+
+  taskList.append(taskView(name));
 }
 
 const addButton = main.getElementById("add-button");
@@ -33,7 +55,7 @@ addButton.addEventListener('click', () => {
 addArea.addEventListener('keydown', event => {
   switch (event.key) {
     case "Enter":
-      taskList.append(taskView(addArea.value));
+      addTask(addArea.value);
       addArea.value = "";
       break;
 
