@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -63,4 +64,9 @@ func getTasks(dbPool *pgxpool.Pool, ctx context.Context, id string) ([]Task, err
 
 	defer rows.Close()
 	return pgx.CollectRows[Task](rows, pgx.RowToStructByName)
+}
+
+func addTask(dbpool *pgxpool.Pool, ctx context.Context, task NewTask) error {
+	_, err := dbpool.Exec(ctx, "INSERT INTO tasks VALUES ($1, false, $2)", task.Name, task.ProjectId)
+	return err
 }
