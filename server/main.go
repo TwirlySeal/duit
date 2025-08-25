@@ -39,7 +39,7 @@ func main() {
 	mux.HandleFunc("GET /{id}", func(w http.ResponseWriter, r *http.Request) {
 		id := r.PathValue("id")
 
-		projects, tasks, err := homeData(dbpool, r.Context(), id) // todo: handle err
+		projects, tasks, err := homeData(dbpool, r.Context(), id)
 		if err != nil {
 			internalErr(w, err)
 			return
@@ -56,7 +56,7 @@ func main() {
 	})
 
 	mux.HandleFunc("GET /data/{id}", func(w http.ResponseWriter, r *http.Request) {
-		tasks, err := getTasks(dbpool, r.Context(), r.PathValue("id")) // todo: handle err
+		tasks, err := getTasks(dbpool, r.Context(), r.PathValue("id"))
 		if err != nil {
 			internalErr(w, err)
 			return
