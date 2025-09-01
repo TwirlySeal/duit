@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"log"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -27,12 +28,6 @@ func homeData(dbPool *pgxpool.Pool, ctx context.Context, id string) ([]Project, 
 	batch.Queue(tasksQuery, id)
 
 	results := dbPool.SendBatch(ctx, &batch)
-	defer func(results pgx.BatchResults) {
-		err := results.Close()
-		if err != nil {
-			panic(err)
-		}
-	}(results)
 
 	projects, err := load[Project](results)
 	if err != nil {
@@ -42,6 +37,11 @@ func homeData(dbPool *pgxpool.Pool, ctx context.Context, id string) ([]Project, 
 	tasks, err := load[Task](results)
 	if err != nil {
 		return nil, nil, fmt.Errorf("error getting tasks: %w", err)
+	}
+
+	err = results.Close()
+	if err != nil {
+		log.Println(err)
 	}
 
 	return projects, tasks, nil
