@@ -10,15 +10,15 @@ import (
 
 type Task struct {
 	Title string `json:"title"`
-	Done bool `json:"done"`
+	Done  bool   `json:"done"`
 }
 
 type Project struct {
 	Name string
-	Id string
+	Id   string
 }
 
-const tasksQuery string = "SELECT title, done FROM tasks WHERE project_id=$1"
+const tasksQuery string = "SELECT title, done FROM tasks WHERE project_id=$1 AND done=FALSE"
 
 func homeData(dbpool *pgxpool.Pool, ctx context.Context, id string) ([]Project, []Task, error) {
 	batch := pgx.Batch{}
@@ -63,5 +63,10 @@ func getTasks(dbpool *pgxpool.Pool, ctx context.Context, id string) ([]Task, err
 
 func addTask(dbpool *pgxpool.Pool, ctx context.Context, task NewTask) error {
 	_, err := dbpool.Exec(ctx, "INSERT INTO tasks VALUES ($1, false, $2)", task.Name, task.ProjectId)
+	return err
+}
+
+func removeTask(dbpool *pgxpool.Pool, ctx context.Context, task NewTask) error {
+	_, err := dbpool.Exec(ctx, "UPDATE tasks SET done= TRUE WHERE title = ($1) AND project_id = ($2)", task.Name, task.ProjectId)
 	return err
 }

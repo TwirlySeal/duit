@@ -43,8 +43,20 @@ function addTask(name) {
   taskList.append(taskView(name));
 }
 
+function removeTask(name){
+  fetch("/removeTask", {
+    method: "POST",
+    body: JSON.stringify({
+      name,
+      projectId
+    })
+  });
+
+}
+
 const addButton = main.getElementById("add-button");
 const addArea = main.getElementById("add-area");
+const checkButton = main.querySelector(".check");
 
 const activate = getSwapper(addButton);
 addButton.addEventListener('click', () => {
@@ -65,3 +77,15 @@ addArea.addEventListener('keydown', event => {
       break;
   }
 });
+
+taskList.addEventListener('click',(event)=>{
+  if (event.target.tagName=='BUTTON') {
+    event.target.closest("li").remove();
+    //event.target.closest("li").classList.toggle("completed");
+  }
+
+  let taskName=event.target.closest("li").textContent.trim();
+
+  removeTask(taskName);
+
+})
