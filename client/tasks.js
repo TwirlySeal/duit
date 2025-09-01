@@ -1,10 +1,11 @@
 import { getSwapper, getTemplate } from "./js/domutils.js";
+import { setProjectId, getProjectId } from "./projects.js"
 
 const main = document.querySelector('main').shadowRoot;
 
-const taskTempl = getTemplate(main.querySelector('template'));
+const taskTemplate = getTemplate(main.querySelector('template'));
 function taskView(name) {
-  const clone = taskTempl();
+  const clone = taskTemplate();
   clone.querySelector('p').textContent = name;
   return clone;
 }
@@ -22,12 +23,6 @@ export async function replaceTasks(pathname) {
   taskList.replaceChildren(...data.map(t => taskView(t.title)));
 }
 
-let projectId;
-function setProjectId(pathname) {
-  projectId = pathname.split('/')[1];
-}
-setProjectId(location.pathname);
-
 /**
  * @arg {string} name
  */
@@ -36,15 +31,15 @@ function addTask(name) {
     method: "POST",
     body: JSON.stringify({
       name,
-      projectId
+      projectId: getProjectId(),
     })
   });
 
   taskList.append(taskView(name));
 }
 
-const addButton = main.getElementById("add-button");
-const addArea = main.getElementById("add-area");
+const addButton = main.getElementById("add-task-button");
+const addArea = main.getElementById("add-task-area");
 
 const activate = getSwapper(addButton);
 addButton.addEventListener('click', () => {

@@ -1,20 +1,17 @@
 import { defaultInteraction, getNavigator } from "./js/nav.js";
 import { getSwapper } from "./js/domutils.js";
 import { replaceTasks } from "./tasks.js";
+import {getProjectElementByPath, initializeProjectNavigation} from "./projects.js";
 
 const nav = document.querySelector('nav').shadowRoot.querySelector('ul');
 const {children} = nav;
+initializeProjectNavigation(children);
 
-const map = new Map(); // associate anchor elements to URL paths
-for (const {firstElementChild: link} of children) {
-  map.set(link.pathname, link);
-}
-
-const activate = getSwapper(map.get(location.pathname));
+const activate = getSwapper(getProjectElementByPath(location.pathname));
 
 const navigate = getNavigator("drawer", undefined, () => {
   const {pathname} = location;
-  activate(map.get(pathname));
+  activate(getProjectElementByPath(pathname));
   replaceTasks(pathname);
 });
 

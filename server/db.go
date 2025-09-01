@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -66,7 +67,18 @@ func getTasks(dbPool *pgxpool.Pool, ctx context.Context, id string) ([]Task, err
 	return pgx.CollectRows[Task](rows, pgx.RowToStructByName)
 }
 
-func addTask(dbpool *pgxpool.Pool, ctx context.Context, task NewTask) error {
-	_, err := dbpool.Exec(ctx, "INSERT INTO tasks VALUES ($1, false, $2)", task.Name, task.ProjectId)
+func addTask(dbPool *pgxpool.Pool, ctx context.Context, task NewTask) error {
+	_, err := dbPool.Exec(ctx, "INSERT INTO tasks VALUES ($1, false, $2)", task.Name, task.ProjectId)
 	return err
+}
+
+func addProject(dbPool *pgxpool.Pool, ctx context.Context, name string) (string, error) {
+	row := dbPool.QueryRow(ctx, "INSERT INTO projects (id, name) VALUES (default, $1) RETURNING id", name)
+	var intId int64
+	err := row.Scan(&intId)
+	if err != nil {
+		return "", err
+	}
+
+	return strconv.FormatInt(intId, 10), nil
 }

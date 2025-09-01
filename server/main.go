@@ -21,6 +21,10 @@ type NewTask struct {
 	ProjectId string
 }
 
+type NewProject struct {
+	Name string
+}
+
 func internalErr(w http.ResponseWriter, err error) {
 	w.WriteHeader(http.StatusInternalServerError)
 	log.Println(err)
@@ -93,7 +97,29 @@ func main() {
 		w.WriteHeader(http.StatusCreated)
 	})
 
-	mux.Handle("GET /static/", http.StripPrefix("/static/", http.FileServer(http.Dir("../client"))))
+	mux.HandleFunc("POST /addProject", func(w http.ResponseWriter, r *http.Request) {
+		var project NewProject
+		err := json.NewDecoder(r.Body).Decode(&project)
+		if err != nil {
+			internalErr(w, err)
+			return
+		}
+
+		id, err := addProject(dbPool, r.Context(), project.Name)
+		if err != nil {
+			internalErr(w, err)
+			return
+		}
+
+		w.Header().Set("Location", "/"+id)
+		w.WriteHeader(http.StatusCreated)
+	})
+
+	fileServer := http.StripPrefix("/static/", http.FileServer(http.Dir("../client")))
+	mux.Handle("GET /static/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control", "no-store, no-cache")
+		fileServer.ServeHTTP(w, r)
+	}))
 
 	log.Fatal(http.ListenAndServe(":8080", mux))
 }
