@@ -1,19 +1,17 @@
 import { defaultInteraction, getNavigator } from "./js/nav.js";
-import { getSwapper } from "./js/domutils.js";
 import { replaceTasks } from "./tasks.js";
-import {getProjectElementByPath, initializeProjectNavigation} from "./projects.js";
+import {activateProject, getProjectElementByPath, initializeProjectNavigation} from "./projects.js";
 
 const nav = document.querySelector('nav').shadowRoot.querySelector('ul');
 const {children} = nav;
-initializeProjectNavigation(children);
-
-const activate = getSwapper(getProjectElementByPath(location.pathname));
 
 const navigate = getNavigator("drawer", undefined, () => {
   const {pathname} = location;
-  activate(getProjectElementByPath(pathname));
+  activateProject(getProjectElementByPath(pathname));
   replaceTasks(pathname);
 });
+
+initializeProjectNavigation(children, navigate);
 
 nav.addEventListener("click", (event) => {
   if (defaultInteraction(event)) return;
@@ -21,7 +19,7 @@ nav.addEventListener("click", (event) => {
   if (link === null) return;
 
   event.preventDefault();
-  activate(link);
+  activateProject(link);
   replaceTasks(link.pathname);
   navigate(link.href);
 });

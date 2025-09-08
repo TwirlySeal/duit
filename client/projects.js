@@ -2,25 +2,34 @@ import { getSwapper, getTemplate } from "./js/domutils.js";
 
 const map = new Map();
 
-export function initializeProjectNavigation(elements) {
-    for (const {firstElementChild: link} of elements) {
-        map.set(link.pathname, link);
-    }
-}
-
 export function getProjectElementByPath(path) {
     return map.get(path);
 }
 
+export function initializeProjectNavigation(elements, navigate) {
+    for (const {firstElementChild: link} of elements) {
+        map.set(link.pathname, link);
+    }
+    activateProject = getSwapper(getProjectElementByPath(location.pathname))
+    navigateFn = navigate;
+}
+
+export let activateProject;
+let navigateFn;
+
 const main = document.querySelector('nav').shadowRoot;
 
 const projectTemplate = getTemplate(main.querySelector('template'));
-function projectView(name, id) {
+function projectView(name, id, activate) {
     const clone = projectTemplate();
     let a = clone.querySelector('a');
     a.textContent = name;
     a.href = id;
     map.set(id, a);
+    if (activate) {
+        activateProject(a);
+        navigateFn(id);
+    }
     return clone;
 }
 
@@ -37,7 +46,7 @@ function addProject(name) {
         })
     }).then(response => {
         let id = response.headers.get("Location")
-        projectList.append(projectView(name, id));
+        projectList.append(projectView(name, id, true));
     });
 }
 
