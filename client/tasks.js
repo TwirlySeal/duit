@@ -20,6 +20,7 @@ const taskList = main.getElementById('task-list');
  */
 export async function showProject(id, name) {
   heading.textContent = name;
+  document.title = name + " - Duit";
   /** @type {Task[]} */
   const data = await (await fetch("/api/projects/" + id)).json();
   taskList.replaceChildren(...data.map(t => taskView(t.title, t.id)));
