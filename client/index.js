@@ -1,30 +1,46 @@
 import { defaultInteraction, getNavigator } from "./js/nav.js";
-import { getSwapper } from "./js/domutils.js";
+import { getSwapper, activeClass } from "./js/domutils.js";
 import { replaceTasks } from "./tasks.js";
 
 const nav = document.querySelector('nav').shadowRoot.querySelector('ul');
-const {children} = nav;
 
-const map = new Map(); // associate anchor elements to URL paths
-for (const {firstElementChild: link} of children) {
-  map.set(link.pathname, link);
+const links = new Map();
+let activeLi, projectId;
+for (const li of nav.children) {
+  const id = parseInt(li.dataset.id);
+  const link = li.firstElementChild;
+  links.set(id, link);
+
+  if (link.classList.contains(activeClass)) {
+    activeLi = li;
+    projectId = id;
+  }
 }
 
-const activate = getSwapper(map.get(location.pathname));
+export const getProjectId = () => projectId;
 
-const navigate = getNavigator("drawer", undefined, () => {
-  const {pathname} = location;
-  activate(map.get(pathname));
-  replaceTasks(pathname);
+const activate = getSwapper(activeLi.firstElementChild);
+
+/** @arg {number} id */
+function swapProject(id) {
+  projectId = id;
+  replaceTasks(id);
+}
+
+const navigate = getNavigator("drawer", projectId, (id) => {
+  swapProject(id);
+  activate(links.get(id));
 });
 
 nav.addEventListener("click", (event) => {
   if (defaultInteraction(event)) return;
-  const link = event.target.closest("a");
-  if (link === null) return;
-
+  const li = event.target.closest("li");
+  if (li === null) return;
   event.preventDefault();
+  
+  const id = parseInt(li.dataset.id);
+  const link = li.firstElementChild;
+  swapProject(id);
   activate(link);
-  replaceTasks(link.pathname);
-  navigate(link.href);
+  navigate(link.href, id);
 });

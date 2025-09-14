@@ -2,31 +2,35 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
+	"strconv"
+	"strings"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Task struct {
+	Id    int    `json:"id"`
 	Title string `json:"title"`
 	Done  bool   `json:"done"`
 }
 
 type Project struct {
 	Name string
-	Id   string
+	Id   int
 }
 
-const tasksQuery string = "SELECT title, done FROM tasks WHERE project_id=$1 AND done=FALSE"
+const tasksQuery string = "SELECT id, title, done FROM tasks WHERE project_id=$1 AND done=FALSE"
 
-func homeData(dbpool *pgxpool.Pool, ctx context.Context, id string) ([]Project, []Task, error) {
+func homeData(dbPool *pgxpool.Pool, ctx context.Context, id int) ([]Project, []Task, error) {
 	batch := pgx.Batch{}
 	batch.Queue("SELECT * FROM projects")
 	batch.Queue(tasksQuery, id)
 
-	results := dbpool.SendBatch(ctx, &batch)
+	results := dbPool.SendBatch(ctx, &batch)
 
 	projects, err := load[Project](results)
 	if err != nil {
@@ -56,8 +60,8 @@ func load[T any](results pgx.BatchResults) ([]T, error) {
 	return pgx.CollectRows[T](rows, pgx.RowToStructByName)
 }
 
-func getTasks(dbpool *pgxpool.Pool, ctx context.Context, id string) ([]Task, error) {
-	rows, err := dbpool.Query(ctx, tasksQuery, id)
+func getTasks(dbPool *pgxpool.Pool, ctx context.Context, id int) ([]Task, error) {
+	rows, err := dbPool.Query(ctx, tasksQuery, id)
 	if err != nil {
 		return nil, err
 	}
@@ -66,12 +70,54 @@ func getTasks(dbpool *pgxpool.Pool, ctx context.Context, id string) ([]Task, err
 	return pgx.CollectRows[Task](rows, pgx.RowToStructByName)
 }
 
-func addTask(dbpool *pgxpool.Pool, ctx context.Context, task NewTask) error {
-	_, err := dbpool.Exec(ctx, "INSERT INTO tasks VALUES ($1, false, $2)", task.Name, task.ProjectId)
-	return err
+type NewTask struct {
+	Title     string `json:"title"`
+	ProjectId int    `json:"projectId"`
 }
 
-func removeTask(dbpool *pgxpool.Pool, ctx context.Context, task NewTask) error {
-	_, err := dbpool.Exec(ctx, "UPDATE tasks SET done= TRUE WHERE title = ($1) AND project_id = ($2)", task.Name, task.ProjectId)
+func addTask(dbPool *pgxpool.Pool, ctx context.Context, task NewTask) (int, error) {
+	var id int
+	err := dbPool.QueryRow(ctx, "INSERT INTO tasks (title, done, project_id) VALUES ($1, false, $2) RETURNING id", task.Title, task.ProjectId).Scan(&id)
+	return id, err
+}
+
+var missingId = errors.New("'id' is a required field")
+
+type TaskPatch struct {
+	Id        *int    `json:"id"`
+	Title     *string `json:"title"`
+	Done      *bool   `json:"done"`
+	ProjectId *string `json:"projectId"`
+}
+
+func patchTask(dbPool *pgxpool.Pool, ctx context.Context, patch TaskPatch) error {
+	if patch.Id == nil {
+		return missingId
+	}
+
+	args := []any{*patch.Id}
+	var setClauses []string
+	addField := func(name string) {
+		setClauses = append(setClauses, name+"=$"+strconv.Itoa(len(args)+1))
+	}
+
+	if patch.Title != nil {
+		addField("title")
+		args = append(args, *patch.Title)
+	}
+	if patch.Done != nil {
+		addField("done")
+		args = append(args, *patch.Done)
+	}
+	if patch.ProjectId != nil {
+		addField("project_id")
+		args = append(args, *patch.ProjectId)
+	}
+
+	if len(setClauses) == 0 {
+		return nil
+	}
+	query := "UPDATE tasks SET " + strings.Join(setClauses, ", ") + " WHERE id=$1"
+	_, err := dbPool.Exec(ctx, query, args...)
 	return err
 }

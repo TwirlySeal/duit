@@ -1,58 +1,62 @@
 import { getSwapper, getTemplate } from "./js/domutils.js";
+import { getProjectId } from "./index.js"
 
 const main = document.querySelector('main').shadowRoot;
 
 const taskTempl = getTemplate(main.querySelector('template'));
-function taskView(name) {
+function taskView(title, id) {
   const clone = taskTempl();
-  clone.querySelector('p').textContent = name;
+  clone.firstElementChild.dataset.id = id;
+  clone.querySelector('p').textContent = title;
   return clone;
 }
 
 const taskList = main.getElementById('task-list');
 
 /**
- * @arg {string} pathname
+ * @arg {number} projectId
  * @typedef {{title: string, done: boolean}} Task
  */
-export async function replaceTasks(pathname) {
+export async function replaceTasks(projectId) {
   /** @type {Task[]} */
-  setProjectId(pathname);
-  const data = await (await fetch("/data" + pathname)).json();
+  const data = await (await fetch("/api/projects/" + projectId)).json();
   taskList.replaceChildren(...data.map(t => taskView(t.title)));
 }
 
-let projectId;
-function setProjectId(pathname) {
-  projectId = pathname.split('/')[1];
-}
-setProjectId(location.pathname);
-
-/**
- * @arg {string} name
- */
-function addTask(name) {
-  fetch("/addTask", {
+async function addTask(title) {
+  const { id } = await (await fetch("/api/tasks", {
     method: "POST",
     body: JSON.stringify({
-      name,
-      projectId
+      title,
+      projectId: getProjectId()
     })
-  });
+  })).json();
 
-  taskList.append(taskView(name));
+  taskList.append(taskView(title, id));
 }
 
-function removeTask(name){
-  fetch("/removeTask", {
-    method: "POST",
+/** @arg {number} id */
+function completeTask(id){
+  fetch("/api/tasks", {
+    method: "PATCH",
     body: JSON.stringify({
-      name,
-      projectId
+      id,
+      done: true
     })
   });
-
 }
+
+taskList.addEventListener('click', (event) => {
+  if (event.target.tagName != 'BUTTON') {
+    return
+  }
+
+  const li = event.target.closest("li");
+  if (li == null) return;
+
+  completeTask(parseInt(li.dataset.id));
+  li.remove();
+});
 
 const addButton = main.getElementById("add-button");
 const addArea = main.getElementById("add-area");
@@ -77,15 +81,3 @@ addArea.addEventListener('keydown', event => {
       break;
   }
 });
-
-taskList.addEventListener('click',(event)=>{
-  if (event.target.tagName=='BUTTON') {
-    event.target.closest("li").remove();
-    //event.target.closest("li").classList.toggle("completed");
-  }
-
-  let taskName=event.target.closest("li").textContent.trim();
-
-  removeTask(taskName);
-
-})

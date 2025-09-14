@@ -1,2 +1,5 @@
 scripts/
+
+# setup-specific
 .idea/
+.DS_Store

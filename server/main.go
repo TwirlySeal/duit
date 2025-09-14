@@ -2,25 +2,14 @@ package main
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"html/template"
 	"log"
 	"net/http"
 	"os"
+	"strconv"
+
+	"github.com/jackc/pgx/v5/pgxpool"
 )
-
-type PageData struct {
-	Projects []Project
-	Tasks    []Task
-	ActiveId string
-}
-
-type NewTask struct {
-	Name      string
-	ProjectId string
-}
 
 func internalErr(w http.ResponseWriter, err error) {
 	w.WriteHeader(http.StatusInternalServerError)
@@ -28,20 +17,39 @@ func internalErr(w http.ResponseWriter, err error) {
 }
 
 func main() {
-	fmt.Println("POSTGRES_URL:", os.Getenv("POSTGRES_URL"))
-	dbpool, err := pgxpool.New(context.Background(), os.Getenv("POSTGRES_URL"))
+	dbPool, err := pgxpool.New(context.Background(), os.Getenv("POSTGRES_URL"))
 	if err != nil {
-		log.Fatalf("Unable to connect to database: %v\n", err)
+		log.Fatalf("Failed to connect to database: %v\n", err)
 	}
-	defer dbpool.Close()
+	defer dbPool.Close()
 
 	mux := http.NewServeMux()
+
+	html(mux, dbPool)
+	mux.Handle("/api/", http.StripPrefix("/api", api(dbPool)))
+
+	mux.Handle("GET /static/", http.StripPrefix("/static/", http.FileServer(http.Dir("../client"))))
+
+	log.Fatal(http.ListenAndServe(":8080", mux))
+}
+
+type PageData struct {
+	Projects []Project
+	Tasks    []Task
+	ActiveId int
+}
+
+func html(mux *http.ServeMux, dbPool *pgxpool.Pool) {
 	tmpl := template.Must(template.ParseFiles("../client/index.html"))
 
 	mux.HandleFunc("GET /{id}", func(w http.ResponseWriter, r *http.Request) {
-		id := r.PathValue("id")
+		id, err := strconv.Atoi(r.PathValue("id"))
+		if err != nil {
+			internalErr(w, err)
+			return
+		}
 
-		projects, tasks, err := homeData(dbpool, r.Context(), id)
+		projects, tasks, err := homeData(dbPool, r.Context(), id)
 		if err != nil {
 			internalErr(w, err)
 			return
@@ -56,59 +64,4 @@ func main() {
 			log.Println(err)
 		}
 	})
-
-	mux.HandleFunc("GET /data/{id}", func(w http.ResponseWriter, r *http.Request) {
-		tasks, err := getTasks(dbpool, r.Context(), r.PathValue("id"))
-		if err != nil {
-			internalErr(w, err)
-			return
-		}
-
-		response, err := json.Marshal(tasks)
-		if err != nil {
-			internalErr(w, err)
-			return
-		}
-
-		_, err = w.Write(response)
-		if err != nil {
-			log.Println(err)
-			return
-		}
-	})
-
-	mux.HandleFunc("POST /addTask", func(w http.ResponseWriter, r *http.Request) {
-		var task NewTask
-		json.NewDecoder(r.Body).Decode(&task)
-		if err != nil {
-			internalErr(w, err)
-			return
-		}
-
-		err := addTask(dbpool, r.Context(), task)
-		if err != nil {
-			internalErr(w, err)
-			return
-		}
-
-		w.WriteHeader(http.StatusCreated)
-	})
-
-	mux.HandleFunc("POST /removeTask", func(w http.ResponseWriter, r *http.Request) {
-		var task NewTask
-		json.NewDecoder(r.Body).Decode(&task)
-		if err != nil {
-			internalErr(w, err)
-			return
-		}
-		err := removeTask(dbpool, r.Context(), task)
-		if err != nil {
-			internalErr(w, err)
-			return
-		}
-	})
-
-	mux.Handle("GET /static/", http.StripPrefix("/static/", http.FileServer(http.Dir("../client"))))
-
-	log.Fatal(http.ListenAndServe(":8080", mux))
 }
