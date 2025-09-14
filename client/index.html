@@ -44,7 +44,7 @@
             </style>
 
             <ul>
-                {{$activeId := .ActiveId}}
+                {{$activeId := .ActiveProject.Id}}
                 {{range .Projects}}
                     <li data-id="{{.Id}}"><a href="/{{.Id}}" {{if eq .Id $activeId}}class="active"{{end}}>{{.Name}}</a></li>
                 {{end}}
@@ -76,7 +76,7 @@
                 }
             </style>
 
-            <h1>Inbox</h1>
+            <h1>{{.ActiveProject.Name}}</h1>
             <ul id="task-list">
                 {{range .Tasks}}
                     <li data-id="{{.Id}}">

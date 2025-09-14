@@ -19,35 +19,51 @@ type Task struct {
 }
 
 type Project struct {
-	Name string
 	Id   int
+	Name string
+}
+
+type PageData struct {
+	Projects []Project
+	Tasks    []Task
+	ActiveProject Project
 }
 
 const tasksQuery string = "SELECT id, title, done FROM tasks WHERE project_id=$1 AND done=FALSE"
 
-func homeData(dbPool *pgxpool.Pool, ctx context.Context, id int) ([]Project, []Task, error) {
+func homeData(dbPool *pgxpool.Pool, ctx context.Context, id int) (PageData, error) {
 	batch := pgx.Batch{}
 	batch.Queue("SELECT * FROM projects")
 	batch.Queue(tasksQuery, id)
+	batch.Queue("SELECT name FROM projects WHERE id=$1", id)
 
 	results := dbPool.SendBatch(ctx, &batch)
+	defer func() {
+		if err := results.Close(); err != nil {
+			log.Println(err)
+		}
+	}()
 
 	projects, err := load[Project](results)
 	if err != nil {
-		return nil, nil, fmt.Errorf("Error getting projects: %w", err)
+		return PageData{}, fmt.Errorf("Failed to get projects: %w", err)
 	}
 
 	tasks, err := load[Task](results)
 	if err != nil {
-		return nil, nil, fmt.Errorf("Error getting tasks: %w", err)
+		return PageData{}, fmt.Errorf("Failed to get tasks: %w", err)
 	}
 
-	err = results.Close()
-	if err != nil {
-		log.Println(err)
+	activeProject := Project{Id: id}
+	if err := results.QueryRow().Scan(&activeProject.Name); err != nil {
+		return PageData{}, fmt.Errorf("Failed to get project name: %w", err)
 	}
 
-	return projects, tasks, nil
+	return PageData{
+		projects,
+		tasks,
+		activeProject,
+	}, nil
 }
 
 func load[T any](results pgx.BatchResults) ([]T, error) {

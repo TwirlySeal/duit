@@ -11,16 +11,18 @@ function taskView(title, id) {
   return clone;
 }
 
+const heading = main.querySelector('h1');
 const taskList = main.getElementById('task-list');
 
 /**
- * @arg {number} projectId
+ * @arg {number} id
  * @typedef {{title: string, done: boolean}} Task
  */
-export async function replaceTasks(projectId) {
+export async function showProject(id, name) {
+  heading.textContent = name;
   /** @type {Task[]} */
-  const data = await (await fetch("/api/projects/" + projectId)).json();
-  taskList.replaceChildren(...data.map(t => taskView(t.title)));
+  const data = await (await fetch("/api/projects/" + id)).json();
+  taskList.replaceChildren(...data.map(t => taskView(t.title, t.id)));
 }
 
 async function addTask(title) {

@@ -33,12 +33,6 @@ func main() {
 	log.Fatal(http.ListenAndServe(":8080", mux))
 }
 
-type PageData struct {
-	Projects []Project
-	Tasks    []Task
-	ActiveId int
-}
-
 func html(mux *http.ServeMux, dbPool *pgxpool.Pool) {
 	tmpl := template.Must(template.ParseFiles("../client/index.html"))
 
@@ -49,17 +43,13 @@ func html(mux *http.ServeMux, dbPool *pgxpool.Pool) {
 			return
 		}
 
-		projects, tasks, err := homeData(dbPool, r.Context(), id)
+		pageData, err := homeData(dbPool, r.Context(), id)
 		if err != nil {
 			internalErr(w, err)
 			return
 		}
 
-		err = tmpl.Execute(w, PageData{
-			projects,
-			tasks,
-			id,
-		})
+		err = tmpl.Execute(w, pageData)
 		if err != nil {
 			log.Println(err)
 		}

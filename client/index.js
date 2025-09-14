@@ -1,6 +1,6 @@
 import { defaultInteraction, getNavigator } from "./js/nav.js";
 import { getSwapper, activeClass } from "./js/domutils.js";
-import { replaceTasks } from "./tasks.js";
+import { showProject } from "./tasks.js";
 
 const nav = document.querySelector('nav').shadowRoot.querySelector('ul');
 
@@ -22,14 +22,14 @@ export const getProjectId = () => projectId;
 const activate = getSwapper(activeLi.firstElementChild);
 
 /** @arg {number} id */
-function swapProject(id) {
+function swapProject(id, link) {
   projectId = id;
-  replaceTasks(id);
+  activate(link);
+  showProject(id, link.textContent);
 }
 
 const navigate = getNavigator("drawer", projectId, (id) => {
-  swapProject(id);
-  activate(links.get(id));
+  swapProject(id, links.get(id));
 });
 
 nav.addEventListener("click", (event) => {
@@ -40,7 +40,6 @@ nav.addEventListener("click", (event) => {
   
   const id = parseInt(li.dataset.id);
   const link = li.firstElementChild;
-  swapProject(id);
-  activate(link);
+  swapProject(id, link);
   navigate(link.href, id);
 });
