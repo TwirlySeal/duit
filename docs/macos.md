@@ -1,31 +1,32 @@
 # macOS first setup
-1. Install Homebrew from https://brew.sh/. Homebrew is a package manager for macOS that automates installing programs and manages your PATH for you.
+1. Install [Homebrew](https://brew.sh/).
 
 ----
 
-2. Install Git, Go, and PostgreSQL.
-You can omit any software you already have installed.
+2. Install Git, Go, and PostgreSQL. You can omit any software you already have installed.
 ```zsh
 brew install git go postgresql@17
 ```
 
 ----
 
-3. Start Postgres.
+3. Add the following lines to `~/.zshrc` and restart your shell.
 ```zsh
-LC_ALL="C" postgres -D /opt/homebrew/var/postgresql@17
-```
-- `LC_ALL="C"` sets the locale environment variable for the current shell to one that works well with Postgres.
-- The `-D` option specifies the data directory (where your Postgres databases are stored).
-
-Optional: Make a simpler zsh alias for this command. You can do this by opening `~/.zshrc` in a text editor and adding the following line. Now you can just type `start_postgres`.
-```
-alias start_postgres='LC_ALL="C" postgres -D /opt/homebrew/var/postgresql@17'
+export PATH="/opt/homebrew/opt/postgresql@17/bin:$PATH"
+export PGDATA="/opt/homebrew/var/postgresql@17"
+alias pg_start='LC_ALL="C" postgres'
 ```
 
 ----
 
-4. Clone and enter the Duit Git repository.
+4. Start Postgres.
+```zsh
+pg_start
+```
+
+----
+
+5. In a new terminal, clone and enter the Duit Git repository.
 ```zsh
 git clone https://github.com/TwirlySeal/duit.git
 cd duit
@@ -33,35 +34,33 @@ cd duit
 
 ----
 
-5. Run `setup.sql`. This creates a database called 'duit' and inserts some test data.
+6. Run `setup.sql` to create the 'duit' database and insert mock data.
 ```zsh
 psql postgres -f setup.sql
 ```
-- `psql` is a command-line interface for sending queries to Postgres.
-- The `-f` option specifies a file to read queries from.
 
 ----
 
-6. Set the `POSTGRES_URL` environment variable. This is used because different platforms and setups will need different URLs to connect to the database.
+7. Make a script to set the `POSTGRES_URL` environment variable.
+
+a. Create a directory called 'scripts' in the root of the project (`scripts/` is in `.gitignore`)
+
+b. Add a file inside called 'postgres_url' with the following content:
 ```zsh
 export POSTGRES_URL="postgres://localhost/duit"
 ```
-
-Optional: Save this step as a script.
-  1. Create a `scripts` directory in the root of the project (it is in `.gitignore`).
-  2. Inside `scripts`, write the command to a file called `postgres_url` (a file extension is not needed).
-  3. Make the file executable.
-  ```zsh
-  chmod +x scripts/postgres_url
-  ```
-  4. Run the script like this:
+c. Make the file executable.
+```zsh
+chmod +x scripts/postgres_url
+```
+d. Run the script.
 ```zsh
 source scripts/postgres_url
 ```
 
 ----
 
-7. Enter the 'server' directory and run the Go server.
+8. Enter the 'server' directory and run the Go server.
 ```zsh
 cd server
 go run .
@@ -69,11 +68,12 @@ go run .
 
 ----
 
-8. Visit `http://localhost:8080` in your browser to access the web app.
+9. Open `http://localhost:8080` in a browser to access the web app.
 
 # Running the project
 After first setup, these are the only steps needed to run the project.
+
 1. Start Postgres
-2. Set the `POSTGRES_URL` environment variable
+2. Run the `postgres_url` script
 3. Run the Go server
-4. Visit the web app in your browser.
+4. Open the web app in a browser
