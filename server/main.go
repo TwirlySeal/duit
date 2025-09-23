@@ -11,11 +11,6 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func internalErr(w http.ResponseWriter, err error) {
-	w.WriteHeader(http.StatusInternalServerError)
-	log.Println(err)
-}
-
 func main() {
 	dbPool, err := pgxpool.New(context.Background(), os.Getenv("POSTGRES_URL"))
 	if err != nil {
@@ -27,8 +22,6 @@ func main() {
 
 	html(mux, dbPool)
 	mux.Handle("/api/", http.StripPrefix("/api", api(dbPool)))
-
-	mux.Handle("GET /static/", http.StripPrefix("/static/", http.FileServer(http.Dir("../client"))))
 
 	log.Fatal(http.ListenAndServe(":8080", mux))
 }
@@ -49,9 +42,14 @@ func html(mux *http.ServeMux, dbPool *pgxpool.Pool) {
 			return
 		}
 
-		err = tmpl.Execute(w, pageData)
-		if err != nil {
-			log.Println(err)
+		w.Header().Set("Content-Type", "text/html")
+
+		encoder := selectEncoding(w, r)
+		if encoder == nil {
+			tmpl.Execute(w, pageData)
+		} else {
+			tmpl.Execute(encoder, pageData)
+			encoder.Close()
 		}
 	})
 }

@@ -1,0 +1,12 @@
+http://localhost {
+    handle_path /static/* {
+		encode
+        file_server {
+            root client
+        }
+    }
+
+    handle {
+        reverse_proxy :8080
+    }
+}

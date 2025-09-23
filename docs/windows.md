@@ -62,12 +62,20 @@ go run .
 
 ----
 
-9. Open `http://localhost:8080` in a browser to access the web app.
+9. Start Caddy from the root directory in a new terminal.
+```powershell
+caddy run
+```
+
+----
+
+10. Open `http://localhost/1` in a browser to access the web app.
 
 # Running the project
 After first setup, these are the only steps needed to run the project.
 
 1. Start Postgres
 2. Run the `postgres_url.ps1` script
-3. Run the Go server
-4. Open the web app in a browser
+3. Start the Go server
+4. Start Caddy
+5. Open the web app in a browser
