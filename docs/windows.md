@@ -10,9 +10,9 @@ winget install Microsoft.PowerShell
 
 ----
 
-3. Install Git, Go, and PostgreSQL. You can omit any software you already have installed.
+3. Install Git, Go, PostgreSQL, and Caddy. You can omit any software you already have installed.
 ```powershell
-scoop install git go postgresql
+scoop install git go postgresql caddy
 ```
 
 ----
