@@ -34,6 +34,7 @@ h1, h2, h3, h4, h5, h6 {
     text-wrap: balance;
 }
 
+
 button {
     cursor: pointer;
     background-color: transparent;
@@ -46,4 +47,12 @@ button {
 ul {
     padding: 0;
     li { list-style-type: none; }
+}
+
+input.field {
+  background-color: transparent;
+  color: white;
+  border: 1px solid var(--outline);
+  border-radius: 0.5rem;
+  padding: 0.5rem;
 }

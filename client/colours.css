@@ -4,6 +4,7 @@
     --primary-container: oklch(32% 0.06 25deg);
     --primary-glyph: oklch(74% 0.15 25deg);
     --primary-action: oklch(62% 0.18 25deg);
+    --primary-action-hv: oklch(68% 0.18 25deg);
     --secondary-container: oklch(31% 0.01 81deg);
     --outline: oklch(45% 0 0deg);
     --outline-variant: oklch(36% 0 0deg);
