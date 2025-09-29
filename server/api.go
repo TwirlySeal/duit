@@ -14,24 +14,6 @@ func internalErr(w http.ResponseWriter, err error) {
 	log.Println(err)
 }
 
-func writeJson(w http.ResponseWriter, r *http.Request, v any) {
-	response, err := json.Marshal(v)
-	if err != nil {
-		internalErr(w, err)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	
-	encoder := selectEncoding(w, r)
-	if encoder == nil {
-		w.Write(response)
-	} else {
-		encoder.Write(response)
-		encoder.Close()
-	}
-}
-
 func api(dbPool *pgxpool.Pool) *http.ServeMux {
 	mux := http.NewServeMux()
 
@@ -43,7 +25,21 @@ func api(dbPool *pgxpool.Pool) *http.ServeMux {
 			return
 		}
 
-		writeJson(w, r, tasks)
+		response, err := json.Marshal(tasks)
+		if err != nil {
+			internalErr(w, err)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+
+		encoder := selectEncoding(w, r)
+		if encoder == nil {
+			w.Write(response)
+		} else {
+			encoder.Write(response)
+			encoder.Close()
+		}
 	})
 
 	mux.HandleFunc("POST /tasks", func(w http.ResponseWriter, r *http.Request) {
@@ -60,10 +56,24 @@ func api(dbPool *pgxpool.Pool) *http.ServeMux {
 			return
 		}
 
-		w.WriteHeader(http.StatusCreated)
-		writeJson(w, r, struct {
+		response, err := json.Marshal(struct {
 			Id int `json:"id"`
 		}{id})
+		if err != nil {
+			internalErr(w, err)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		encoder := selectEncoding(w, r)
+		w.WriteHeader(http.StatusCreated)
+
+		if encoder == nil {
+			w.Write(response)
+		} else {
+			encoder.Write(response)
+			encoder.Close()
+		}
 	})
 
 	mux.HandleFunc("PATCH /tasks", func(w http.ResponseWriter, r *http.Request) {
