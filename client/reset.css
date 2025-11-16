@@ -49,10 +49,10 @@ ul {
     li { list-style-type: none; }
 }
 
-input.field {
-  background-color: transparent;
-  color: white;
-  border: 1px solid var(--outline);
-  border-radius: 0.5rem;
-  padding: 0.5rem;
-}
+/* input.field { */
+  /* background-color: transparent; */
+  /* color: white; */
+  /* border: 1px solid var(--outline); */
+  /* border-radius: var(--sp1); */
+  /* padding: var(--sp1); */
+/* } */

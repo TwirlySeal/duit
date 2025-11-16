@@ -55,32 +55,42 @@ taskList.addEventListener('click', (event) => {
   }
 
   const li = event.target.closest("li");
-  if (li == null) return;
+  if (li === null) return;
 
   completeTask(parseInt(li.dataset.id));
   li.remove();
 });
 
 const addButton = main.getElementById("add-button");
-const addArea = main.getElementById("add-area");
-const checkButton = main.querySelector(".check");
+const taskEditor = main.getElementById("task-editor");
+// const checkButton = main.querySelector(".check");
 
 const activate = getSwapper(addButton);
 addButton.addEventListener('click', () => {
-  activate(addArea);
-  addArea.focus();
+  activate(taskEditor);
+  taskEditor.focus();
 });
 
-addArea.addEventListener('keydown', event => {
-  switch (event.key) {
-    case "Enter":
-      addTask(addArea.value);
-      addArea.value = "";
-      break;
+const taskName = main.getElementById("task-name");
+taskName.replaceChildren();
 
-    case "Escape":
-      activate(addButton);
-      addArea.value = "";
-      break;
+taskName.addEventListener('input', () => {
+  if (taskName.textContent.trim() === "") {
+    taskName.replaceChildren();
+    return;
   }
 });
+
+// addArea.addEventListener('keydown', event => {
+//   switch (event.key) {
+//     case "Enter":
+//       addTask(addArea.value);
+//       addArea.value = "";
+//       break;
+
+//     case "Escape":
+//       activate(addButton);
+//       addArea.value = "";
+//       break;
+//   }
+// });

@@ -20,15 +20,15 @@
 ">
     <nav style="
         background-color: var(--surface);
-        padding: 0.75rem;
+        padding: var(--sp2);
     ">
         <template shadowrootmode="open">
             {{template "reset"}}
             <style>
                 a {
                     display: block;
-                    padding: 0.4rem;
-                    border-radius: 0.4rem;
+                    padding: var(--sp1);
+                    border-radius: var(--sp1);
                     color: inherit;
                     text-decoration: none;
 
@@ -54,22 +54,23 @@
 
     <main style="
         grid-column: 3;
-        padding: 1rem;
+        padding: var(--sp3);
     ">
         <template shadowrootmode="open">
             {{template "reset"}}
             <style>
                 li {
-                    padding: 0.5rem 0rem;
+                    padding: var(--sp1) 0;
                     border-bottom: 1px solid var(--outline-variant);
                     display: flex;
                     align-items: center;
-                    gap: 0.5rem;
+                    gap: var(--sp1);
                 }
 
                 .check {
-                    height: 1.2rem;
-                    width: 1.2rem;
+                    --size: 1.2rem;
+                    height: var(--size);
+                    width: var(--size);
                     flex-shrink: 0;
                     border: 1px solid var(--outline);
                     border-radius: 50%;
@@ -93,18 +94,37 @@
             </template>
 
             <style>
-                #add-button, #add-area {
-                    margin-top: 0.5rem;
+                #add-button, #task-editor {
+                    margin-top: var(--sp1);
                     &:not(.active) { display: none; }
                 }
 
                 #add-button:hover {
                     color: var(--primary-glyph);
                 }
+
+                #task-name:empty::before {
+                    content: "Task name";
+                    color: var(--primary-glyph);
+                    pointer-events: none;
+                    display: block;
+                }
             </style>
 
             <button id="add-button" class="active">Add task</button>
-            <input id="add-area" placeholder="Task name" class="field">
+            <form id="task-editor" style="
+                border: 1px solid var(--outline);
+                border-radius: var(--sp1);
+                padding: var(--sp1);
+            ">
+                <div
+                    id="task-name"
+                    contenteditable="plaintext-only"
+                    role="textbox"
+                    aria-label="Task name"
+                >
+                </div>
+            </form>
         </template>
     </main>
 </body>

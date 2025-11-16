@@ -8,4 +8,8 @@
     --secondary-container: oklch(31% 0.01 81deg);
     --outline: oklch(45% 0 0deg);
     --outline-variant: oklch(36% 0 0deg);
+
+    --sp1: 0.5rem;
+    --sp2: 0.75rem;
+    --sp3: 1rem;
 }
