@@ -1,4 +1,7 @@
-/** Immutable calendar date without a time component */
+/**
+  Immutable calendar date without a time component.
+  Months are 1-indexed.
+*/
 class PlainDate {
   #year;
   #month;
@@ -130,6 +133,8 @@ function isNumber(code) {
 /** @typedef {{
   kind: number;
   value: number;
+  start: number;
+  end: number;
 }} Token */
 
 /**
@@ -144,7 +149,7 @@ function* tokens(text) {
     const code = text.charCodeAt(i);
 
     if (isLetter(code)) {
-      // Advance until space or end
+      // Advance until space or end (consumes space)
       while (i < length && text.charCodeAt(i) !== 32) {
         i++;
       }
@@ -155,11 +160,19 @@ function* tokens(text) {
       );
 
       if (id === undefined) {
-        // Text
-        yield { kind: 0 };
+        yield {
+          kind: 0, // Text
+          // no value
+          start,
+          end: i,
+        };
       } else {
-        // Keyword
-        yield { kind: 1, value: id};
+        yield {
+          kind: 1, // Keyword
+          value: id,
+          start,
+          end: i,
+        };
       }
 
     } else if (isNumber(code)) {
@@ -169,7 +182,9 @@ function* tokens(text) {
 
       yield {
         kind: 2,
-        value: parseInt(text.slice(start, i))
+        value: parseInt(text.slice(start, i)),
+        start,
+        end: i,
       };
 
       // un-consume non-numeric code point
@@ -178,49 +193,83 @@ function* tokens(text) {
   }
 }
 
-/** @arg {string} text */
-function parse(text) {
+/** @typedef {{
+  date: PlainDate;
+  time?: PlainDate;
+  start: number;
+  end: number;
+}} DatetimeNode */
+
+/**
+  Prematurely-optimised iterative LL(1) parser
+  @arg {string} text
+*/
+export function parseTaskName(text) {
   const iterator = tokens(text);
 
-  /** @type {boolean} */ let done;
-  /** @type {Token} */ let token;
+  /** @type {boolean} */
+  let done;
 
-  const nextToken = () => {
-    ({done, value: token} = iterator.next());
-  };
-  nextToken(); // Get first token
+  /** @type {Token}
+    Can persist across loop iterations for 1 lookahead
+  */
+  let token;
 
   /** State for whether to set a new date/time */
   let inDatetimeBlock = false;
 
-  /** @type {PlainDate} */ let date;
-  /** @type {PlainTime} */ let time;
+  /** @type {DatetimeNode[]}  */
+  const nodes = [];
 
-  /** @arg {PlainDate} date */
-  function setDate(plainDate) {
+  /** @type {DatetimeNode} */
+  let node = {};
+
+  function nextToken() {
+    ({done, value: token} = iterator.next());
+  }
+
+  /**
+    @arg {PlainDate} date
+  */
+  function setDate(plainDate, start = token.start) {
     if (!inDatetimeBlock) {
-      time = undefined;
+      node.time = undefined;
+      node.start = start;
+
       inDatetimeBlock = true;
     }
-    date = plainDate;
+    node.end = token.end;
+    node.date = plainDate;
   }
 
   /** @arg {PlainTime} plainTime */
-  function setTime(plainTime) {
+  function setTime(plainTime, start = token.start) {
     if (!inDatetimeBlock) {
       // default to today
-      date = PlainDate.fromDate(new Date());
+      node.date = PlainDate.fromDate(new Date());
+      node.start = start;
+
       inDatetimeBlock = true;
     }
-    time = plainTime;
+    node.end = token.end;
+    node.time = plainTime;
   }
 
-  topLoop:
-  while (!done) {
+  function reset() {
+    if (inDatetimeBlock) {
+      nodes.push(node);
+      node = {};
+      inDatetimeBlock = false;
+    }
+  }
+
+  nextToken(); // Get first token
+
+  topLoop: while (!done) {
     switch (token.kind) {
     // Text
     case 0:
-      inDatetimeBlock = false;
+      reset();
       break;
 
     // Keyword
@@ -277,6 +326,7 @@ function parse(text) {
     // Number
     case 2:
       const hour = token.value;
+      const {start} = token;
       nextToken();
       if (done) break topLoop;
       if (token.kind !== 1) continue topLoop;
@@ -285,12 +335,12 @@ function parse(text) {
       switch (token.value) {
       // am
       case 14:
-        setTime(new PlainTime(hour));
+        setTime(new PlainTime(hour), start);
         break;
 
       // pm
       case 15:
-        setTime(new PlainTime(hour + 12, 0, 0));
+        setTime(new PlainTime(hour + 12, 0, 0), start);
         break;
       }
       break;
@@ -299,12 +349,13 @@ function parse(text) {
     nextToken();
   }
 
-  // return result
-  console.log(date?.day, time?.hour);
+  reset();
+  return nodes;
 }
 
-const test = "tomorrow example 6am";
+// const test = "example task today ";
 // for (const t of tokens(test)) {
 //   console.log(t);
 // }
-parse(test);
+
+// console.log(parseTaskName(test));

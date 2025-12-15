@@ -1,7 +1,7 @@
-import { getSwapper, getTemplate } from "./js/domutils.js";
-import { getProjectId } from "./index.js"
+import { getTemplate } from "./js/domutils.js";
+import { getProjectId } from "./nav.js";
 
-const main = document.querySelector('main').shadowRoot;
+const main = document.querySelector('main');
 
 const taskTempl = getTemplate(main.querySelector('template'));
 function taskView(title, id) {
@@ -12,7 +12,7 @@ function taskView(title, id) {
 }
 
 const heading = main.querySelector('h1');
-const taskList = main.getElementById('task-list');
+const taskList = document.getElementById('task-list');
 
 /**
  * @arg {number} id
@@ -26,7 +26,7 @@ export async function showProject(id, name) {
   taskList.replaceChildren(...data.map(t => taskView(t.title, t.id)));
 }
 
-async function addTask(title) {
+export async function addTask(title) {
   const { id } = await (await fetch("/api/tasks", {
     method: "POST",
     body: JSON.stringify({
@@ -60,37 +60,3 @@ taskList.addEventListener('click', (event) => {
   completeTask(parseInt(li.dataset.id));
   li.remove();
 });
-
-const addButton = main.getElementById("add-button");
-const taskEditor = main.getElementById("task-editor");
-// const checkButton = main.querySelector(".check");
-
-const activate = getSwapper(addButton);
-addButton.addEventListener('click', () => {
-  activate(taskEditor);
-  taskEditor.focus();
-});
-
-const taskName = main.getElementById("task-name");
-taskName.replaceChildren();
-
-taskName.addEventListener('input', () => {
-  if (taskName.textContent.trim() === "") {
-    taskName.replaceChildren();
-    return;
-  }
-});
-
-// addArea.addEventListener('keydown', event => {
-//   switch (event.key) {
-//     case "Enter":
-//       addTask(addArea.value);
-//       addArea.value = "";
-//       break;
-
-//     case "Escape":
-//       activate(addButton);
-//       addArea.value = "";
-//       break;
-//   }
-// });

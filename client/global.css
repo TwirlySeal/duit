@@ -1,0 +1,89 @@
+/* Resets */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+* { margin: 0; }
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    interpolate-size: allow-keywords;
+  }
+}
+
+body {
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+img, picture, video, canvas, svg {
+  display: block;
+  max-width: 100%;
+}
+
+input, button, textarea, select {
+    font: inherit;
+}
+
+p, h1, h2, h3, h4, h5, h6 {
+    overflow-wrap: break-word;
+}
+
+p { text-wrap: pretty; }
+
+h1, h2, h3, h4, h5, h6 {
+    text-wrap: balance;
+}
+
+/* Colors and spacing */
+:root {
+    --brand: #E44232;
+
+    --surface: oklch(from var(--brand) calc(l - 0.37) calc(c - 0.18) h);
+    --surface-bright: oklch(from var(--surface) calc(l + 0.1) c h);
+    --background: oklch(from var(--surface) calc(l - 0.05) c h);
+
+    --on-surface: oklch(from var(--brand) calc(l + 0.5) calc(c - 0.12) h);
+
+    --primary-container: oklch(from var(--brand) calc(l + 0.06) c h);
+    --on-primary-container: oklch(from var(--primary-container) calc(l - 0.5) c h);
+
+    --secondary-container: oklch(from var(--brand) calc(l - 0.2) calc(c - 0.1) h);
+    --on-secondary-container: oklch(from var(--secondary-container) calc(l + 0.5) c h);
+
+    --outline: oklch(0.45 0 0deg);
+    --outline-variant: oklch(0.36 0 0deg);
+
+    --sp1: 0.5rem;
+    --sp2: 0.75rem;
+    --sp3: 1rem;
+}
+
+/* Styles */
+button {
+    cursor: pointer;
+    background-color: transparent;
+    border: none;
+    padding: 0;
+    color: inherit;
+    font-size: inherit;
+
+    &.base {
+      padding: 0.3rem var(--sp2);
+      border-radius: 3rem;
+    }
+
+    &.primary {
+      background-color: var(--primary-container);
+      color: var(--on-primary-container);
+    }
+
+    &.outlined {
+      border: 1px solid var(--outline);
+    }
+}
+
+ul {
+    padding: 0;
+    li { list-style-type: none; }
+}

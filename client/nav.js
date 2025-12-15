@@ -2,7 +2,7 @@ import { defaultInteraction, getNavigator } from "./js/nav.js";
 import { getSwapper, activeClass } from "./js/domutils.js";
 import { showProject } from "./tasks.js";
 
-const nav = document.querySelector('nav').shadowRoot.querySelector('ul');
+const nav = document.getElementById("project-list");
 
 const links = new Map();
 let activeLi, projectId;
