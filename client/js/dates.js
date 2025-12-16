@@ -194,11 +194,14 @@ function* tokens(text) {
 }
 
 /** @typedef {{
-  date: PlainDate;
-  time?: PlainDate;
   start: number;
   end: number;
-}} DatetimeNode */
+}} ExprBase */
+
+/** @typedef { ExprBase & {
+  date: PlainDate;
+  time?: PlainTime;
+}} DatetimeExpr */
 
 /**
   Prematurely-optimised iterative LL(1) parser
@@ -215,52 +218,68 @@ export function parseTaskName(text) {
   */
   let token;
 
-  /** State for whether to set a new date/time */
-  let inDatetimeBlock = false;
+  /**
+    State for whether to start a new Expr
+    0: nothing
+    1: date
+    2: date + time
+  */
+  let block = 0;
 
-  /** @type {DatetimeNode[]}  */
+  /** @type {DatetimeExpr[]}  */
   const nodes = [];
 
-  /** @type {DatetimeNode} */
+  /** @type {DatetimeExpr} */
   let node = {};
 
   function nextToken() {
     ({done, value: token} = iterator.next());
   }
 
+  function reset() {
+    if (block > 0) {
+      nodes.push(node);
+      node = {};
+      block = 0;
+    }
+  }
+
   /**
     @arg {PlainDate} date
   */
   function setDate(plainDate, start = token.start) {
-    if (!inDatetimeBlock) {
-      node.time = undefined;
+    if (block === 1) {
+      reset();
+    }
+
+    if (block === 0) {
+      delete node.time;
       node.start = start;
 
-      inDatetimeBlock = true;
+      block = 1;
     }
+
     node.end = token.end;
     node.date = plainDate;
   }
 
-  /** @arg {PlainTime} plainTime */
+  /**
+    @arg {PlainTime} plainTime
+  */
   function setTime(plainTime, start = token.start) {
-    if (!inDatetimeBlock) {
+    if (block === 2) {
+      reset();
+    }
+
+    if (block === 0) {
       // default to today
       node.date = PlainDate.fromDate(new Date());
       node.start = start;
 
-      inDatetimeBlock = true;
+      block = 2;
     }
     node.end = token.end;
     node.time = plainTime;
-  }
-
-  function reset() {
-    if (inDatetimeBlock) {
-      nodes.push(node);
-      node = {};
-      inDatetimeBlock = false;
-    }
   }
 
   nextToken(); // Get first token
@@ -295,6 +314,7 @@ export function parseTaskName(text) {
 
         // next
         case 10:
+          const {start} = token;
           nextToken();
           if (done) break topLoop;
 
@@ -302,17 +322,17 @@ export function parseTaskName(text) {
           // week
           case 11:
             // todo: allow configuring day
-            setDate(nextDay(1));
+            setDate(nextDay(1), start);
             break;
 
           // month
           case 12:
-            setDate(inMonths(1));
+            setDate(inMonths(1), start);
             break;
 
           // year
           case 13:
-            setDate(inYears(1));
+            setDate(inYears(1), start);
             break;
 
           default:
