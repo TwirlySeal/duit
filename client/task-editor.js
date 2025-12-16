@@ -18,6 +18,67 @@ function clearNameInput() {
 }
 clearNameInput();
 
+/** @typedef {{
+  start: number;
+  end: number;
+}} OffsetRange */
+
+/** @param {OffsetRange} range */
+function selectRange({start, end}) {
+  const range = new Range();
+
+  let current = 0;
+  let found = 0;
+  for (const node of nameInput.childNodes) {    
+    const textNode = node.firstChild ?? node;
+    const len = textNode.textContent.length;
+    const currentEnd = current + len;
+
+    if (start >= current && start <= currentEnd) {
+      range.setStart(textNode, start - current);
+      found++;
+    }
+
+    if (end >= current && end <= currentEnd) {
+      range.setEnd(textNode, end - current);
+      found++;
+    }
+
+    if (found === 2) {
+      const sel = getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+
+      return;
+    }
+
+    current = currentEnd;
+  }
+}
+
+/**
+  start will be greater than end for backwards selections
+  @returns {OffsetRange | null}
+*/
+function selectionToRange() {
+  const sel = getSelection();
+
+  if (sel.type === "None" || !nameInput.contains(sel.anchorNode)) {
+    return null;
+  }
+
+  const range = new Range();
+  range.selectNodeContents(nameInput);
+
+  range.setEnd(sel.anchorNode, sel.anchorOffset);
+  const start = range.toString().length;
+
+  range.setEnd(sel.focusNode, sel.focusOffset);
+  const end = range.toString().length;
+
+  return { start, end };
+}
+
 nameInput.addEventListener('input', () => {
   if (nameInput.textContent.trim() === "") {
     // Clear leftover elements that hide the placeholder
@@ -27,6 +88,8 @@ nameInput.addEventListener('input', () => {
 
   const highlights = parseTaskName(nameInput.textContent);
   const range = new Range();
+
+  const sel = selectionToRange();
 
   // Clear spans and normalise text nodes
   nameInput.textContent = nameInput.textContent;
@@ -39,6 +102,8 @@ nameInput.addEventListener('input', () => {
     range.setEnd(textNode, end);
     range.surroundContents(document.createElement("span"));
   }
+
+  selectRange(sel);
 });
 
 function submitTask() {
