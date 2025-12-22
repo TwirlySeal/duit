@@ -5,14 +5,24 @@ import (
 	"html/template"
 	"log"
 	"net/http"
-	"os"
 	"strconv"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/BurntSushi/toml"
 )
 
+type Config struct {
+	PostgresUrl string `toml:"postgres_url"`
+}
+
 func main() {
-	dbPool, err := pgxpool.New(context.Background(), os.Getenv("POSTGRES_URL"))
+	var config Config
+	_, err := toml.DecodeFile(".env.toml", &config)
+	if err != nil {
+		log.Fatalf("Failed to load config: %v\n", err)
+	}
+
+	dbPool, err := pgxpool.New(context.Background(), config.PostgresUrl)
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v\n", err)
 	}

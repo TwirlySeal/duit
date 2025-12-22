@@ -1,5 +1,1 @@
-scripts/
-
-# setup-specific
-.idea/
-.DS_Store
+.env.toml
