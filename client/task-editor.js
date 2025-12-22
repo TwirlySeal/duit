@@ -79,6 +79,9 @@ function selectionToRange() {
   return { start, end };
 }
 
+/** @type {import("./js/dates.js").DatetimeExpr} */
+let datetime = null;
+
 nameInput.addEventListener('input', () => {
   if (nameInput.textContent.trim() === "") {
     // Clear leftover elements that hide the placeholder
@@ -97,23 +100,46 @@ nameInput.addEventListener('input', () => {
 
   // Iterate in reverse so that offsets remain valid as spans are inserted
   for (let i = highlights.length - 1; i >= 0; i--) {
-    const {start, end} = highlights[i];
-    range.setStart(textNode, start);
-    range.setEnd(textNode, end);
+    const expr = highlights[i];
+
+    range.setStart(textNode, expr.start);
+    range.setEnd(textNode, expr.end);
     range.surroundContents(document.createElement("span"));
+
+    datetime = expr;
+    break; // temporary until other highlight types are added
   }
 
   selectRange(sel);
 });
 
-function submitTask() {
-  addTask(nameInput.textContent);
+function reset() {
+  datetime = null;
   clearNameInput();
+}
+
+function submitTask() {
+  const input = nameInput.textContent;
+
+  let start = datetime.start - 1;
+  for (; start <= 0; start--) {
+    if (input[start] !== ' ') break;
+  }
+
+  let end = datetime.end;
+  for (; end < input.length; end++) {
+    if (input[end] !== ' ') break;
+  }
+
+  const name = input.slice(0, start) + " " + input.slice(end);
+  
+  addTask(name, datetime);
+  reset();
 }
 
 function cancelTask() {
   activate(showButton);
-  clearNameInput();
+  reset();
 }
 
 taskEditor.addEventListener('submit', event => {

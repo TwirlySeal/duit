@@ -11,7 +11,7 @@
 <body style="
     background-color: var(--background);
     color: var(--on-surface);
-    font-family: Arial, Helvetica, sans-serif;
+    font-family: sans-serif;
     display: grid;
     grid-template-columns: minmax(10rem, 20rem) 1fr minmax(20rem, 50rem) 1fr;
     height: 100dvh;
@@ -79,8 +79,13 @@
         <ul id="task-list">
             {{range .Tasks}}
                 <li data-id="{{.Id}}">
-                    <button class="check"></button>
-                    <p>{{.Title}}</p>
+                    <button class="check" aria-label="Mark task as complete"></button>
+                    <div>
+                        <p>{{ .Title }}</p>
+                        {{ if .Date }}
+                            <time datetime="{{ .FormatDate }}"></time>
+                        {{ end }}
+                    </div>
                 </li>
             {{end}}
         </ul>

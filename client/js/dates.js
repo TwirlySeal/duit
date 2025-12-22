@@ -1,4 +1,12 @@
 /**
+  @param {number} number
+  @param {number} length
+*/
+function formatNumber(number, length) {
+  return number.toString().padStart(length, '0');
+}
+
+/**
   Immutable calendar date without a time component.
   Months are 1-indexed.
 */
@@ -38,6 +46,13 @@ class PlainDate {
       date.getDate()
     );
   }
+
+  toJSON() {
+    const y = formatNumber(this.#year, 4);
+    const m = formatNumber(this.#month, 2);
+    const d = formatNumber(this.#day, 2);
+    return `${y}-${m}-${d}`;
+  }
 }
 
 /** Immutable time without a date component */
@@ -67,6 +82,13 @@ class PlainTime {
 
   get hour() {
     return this.#hour;
+  }
+
+  toJSON() {
+    const hh = formatNumber(this.#hour, 2);
+    const mm = formatNumber(this.#minute, 2);
+    const ss = formatNumber(this.#minute, 2);
+    return `${hh}:${mm}:${ss}`;
   }
 }
 
@@ -355,7 +377,7 @@ export function parseTaskName(text) {
       switch (token.value) {
       // am
       case 14:
-        setTime(new PlainTime(hour), start);
+        setTime(new PlainTime(hour, 0, 0), start);
         break;
 
       // pm

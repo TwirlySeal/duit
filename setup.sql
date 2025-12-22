@@ -13,11 +13,15 @@ INSERT INTO projects (name) VALUES
 CREATE TABLE tasks (
     id serial PRIMARY KEY NOT NULL,
     title text NOT NULL,
-    done boolean NOT NULL,
+    done boolean NOT NULL DEFAULT false,
+    date DATE,
+    time TIME,
     project_id int REFERENCES projects NOT NULL
+
+    CONSTRAINT date_required_for_time CHECK (time IS NULL OR date IS NOT NULL)
 );
 
-INSERT INTO tasks (title, done, project_id) VALUES
-    ('Find Walter', false, 1),
-    ('Achieve enlightenment', true, 1),
-    ('Steal the moon', false, 2);
+INSERT INTO tasks (title, project_id) VALUES
+    ('Find Walter', 1),
+    ('Achieve enlightenment', 1),
+    ('Steal the moon', 2);

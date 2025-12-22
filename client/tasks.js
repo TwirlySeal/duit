@@ -14,6 +14,16 @@ function taskView(title, id) {
 const heading = main.querySelector('h1');
 const taskList = document.getElementById('task-list');
 
+// Insert human-readable text for dates from server
+for (const li of taskList.children) {
+  /** @type {HTMLTimeElement?} */
+  const time = li.querySelector('time');
+  if (time === null) continue;
+
+  const date = new Date(time.dateTime);
+  time.textContent = date.toLocaleString();
+}
+
 /**
  * @arg {number} id
  * @typedef {{title: string, done: boolean}} Task
@@ -26,13 +36,26 @@ export async function showProject(id, name) {
   taskList.replaceChildren(...data.map(t => taskView(t.title, t.id)));
 }
 
-export async function addTask(title) {
+/**
+  @param {import("./js/dates.js").DatetimeExpr} datetime
+*/
+export async function addTask(title, datetime) {
+  const body = {
+    title,
+    projectId: getProjectId()
+  };
+
+  if (datetime !== null) {
+    body.date = datetime.date;
+
+    if (datetime.time !== null) {
+      body.time = datetime.time;
+    }
+  }
+
   const { id } = await (await fetch("/api/tasks", {
     method: "POST",
-    body: JSON.stringify({
-      title,
-      projectId: getProjectId()
-    })
+    body: JSON.stringify(body)
   })).json();
 
   taskList.append(taskView(title, id));

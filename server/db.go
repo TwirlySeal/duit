@@ -5,17 +5,27 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"strconv"
 	"strings"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Task struct {
-	Id    int    `json:"id"`
+	Id int `json:"id"`
 	Title string `json:"title"`
-	Done  bool   `json:"done"`
+	Date *time.Time `json:"date"`
+	Time *time.Time `json:"time"`
+}
+
+func (t Task) FormatDate() string {
+	datePart := t.Date.Format(time.DateOnly)
+	if t.Time == nil {
+		return datePart
+	}
+
+	return datePart + "T" + t.Time.Format(time.TimeOnly)
 }
 
 type Project struct {
@@ -29,7 +39,7 @@ type PageData struct {
 	ActiveProject Project
 }
 
-const tasksQuery string = "SELECT id, title, done FROM tasks WHERE project_id=$1 AND done=FALSE"
+const tasksQuery string = "SELECT id, title, date, time FROM tasks WHERE project_id=$1 AND done=FALSE"
 
 func homeData(dbPool *pgxpool.Pool, ctx context.Context, id int) (PageData, error) {
 	batch := pgx.Batch{}
@@ -87,23 +97,61 @@ func getTasks(dbPool *pgxpool.Pool, ctx context.Context, id int) ([]Task, error)
 }
 
 type NewTask struct {
-	Title     string `json:"title"`
-	ProjectId int    `json:"projectId"`
+	Title string `json:"title"`
+	ProjectId int `json:"projectId"`
+	Date *string `json:"date"`
+	Time *string `json:"time"`
 }
 
 func addTask(dbPool *pgxpool.Pool, ctx context.Context, task NewTask) (int, error) {
 	var id int
-	err := dbPool.QueryRow(ctx, "INSERT INTO tasks (title, done, project_id) VALUES ($1, false, $2) RETURNING id", task.Title, task.ProjectId).Scan(&id)
+
+	var columns []string
+	var values []any
+	var placeholders []string
+
+	addParam := func(column string, value any) {
+		columns = append(columns, column)
+		values = append(values, value)
+		placeholders = append(placeholders, fmt.Sprintf("$%d", len(placeholders) + 1))
+	}
+
+	addParam("title", task.Title)
+	addParam("project_id", task.ProjectId)
+
+	join := func(elems []string) string {
+		return strings.Join(elems, ", ")
+	}
+
+	if task.Date != nil {
+		addParam("date", *task.Date)
+	}
+	if task.Time != nil {
+		addParam("time", *task.Time)
+	}
+
+	err := dbPool.QueryRow(
+		ctx,
+		fmt.Sprintf(
+			"INSERT INTO tasks (%s) VALUES (%s) RETURNING id",
+			join(columns),
+			join(placeholders),
+		),
+		values...,
+	).Scan(&id)
+
 	return id, err
 }
 
 var missingId = errors.New("'id' is a required field")
 
 type TaskPatch struct {
-	Id        *int    `json:"id"`
-	Title     *string `json:"title"`
-	Done      *bool   `json:"done"`
+	Id *int `json:"id"`
+	Title *string `json:"title"`
+	Done *bool `json:"done"`
 	ProjectId *string `json:"projectId"`
+	Date *string `json:"date"`
+	Time *string `json:"time"`
 }
 
 func patchTask(dbPool *pgxpool.Pool, ctx context.Context, patch TaskPatch) error {
@@ -111,29 +159,28 @@ func patchTask(dbPool *pgxpool.Pool, ctx context.Context, patch TaskPatch) error
 		return missingId
 	}
 
-	args := []any{*patch.Id}
-	var setClauses []string
-	addField := func(name string) {
-		setClauses = append(setClauses, name+"=$"+strconv.Itoa(len(args)+1))
-	}
+	s := NewSQLMap(", ", *patch.Id)
 
 	if patch.Title != nil {
-		addField("title")
-		args = append(args, *patch.Title)
+		s.Param("title", *patch.Title)
 	}
 	if patch.Done != nil {
-		addField("done")
-		args = append(args, *patch.Done)
+		s.Param("done", *patch.Done)
 	}
 	if patch.ProjectId != nil {
-		addField("project_id")
-		args = append(args, *patch.ProjectId)
+		s.Param("project_id", *patch.ProjectId)
+	}
+	if patch.Date != nil {
+		s.Param("date", *patch.Date)
+	}
+	if patch.Time != nil {
+		s.Param("time", *patch.Time)
 	}
 
-	if len(setClauses) == 0 {
+	if len(s.clauses) == 0 {
 		return nil
 	}
-	query := "UPDATE tasks SET " + strings.Join(setClauses, ", ") + " WHERE id=$1"
-	_, err := dbPool.Exec(ctx, query, args...)
+	query := fmt.Sprintf("UPDATE tasks SET %s WHERE id = $1", s)
+	_, err := dbPool.Exec(ctx, query, s.args...)
 	return err
 }
