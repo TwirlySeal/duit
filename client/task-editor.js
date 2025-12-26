@@ -119,24 +119,30 @@ function reset() {
 }
 
 function submitTask() {
-  const input = nameInput.textContent;
+  let name = nameInput.textContent.trim();
 
   if (datetime === null) {
-    addTask(input, null);
+    addTask(name, null);
     return;
   }
 
   let start = datetime.start - 1;
-  while (start >= 0 && input[start] === ' ') {
+  while (start >= 0 && name[start] === ' ') {
     start--;
   }
 
   let end = datetime.end;
-  while (end < input.length && input[end] === ' ') {
+  while (end < name.length && name[end] === ' ') {
     end++;
   }
 
-  const name = input.slice(0, start + 1) + " " + input.slice(end);
+  if (datetime.start === 0) {
+    name = name.slice(end);
+  } else if (datetime.end === name.length) {
+    name = name.slice(0, start + 1);
+  } else {
+    name = name.slice(0, start + 1) + " " + name.slice(end);
+  }
   
   addTask(name, datetime);
   reset();
