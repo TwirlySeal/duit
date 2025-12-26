@@ -121,6 +121,11 @@ function reset() {
 function submitTask() {
   const input = nameInput.textContent;
 
+  if (datetime === null) {
+    addTask(input, null);
+    return;
+  }
+
   let start = datetime.start - 1;
   while (start >= 0 && input[start] === ' ') {
     start--;
