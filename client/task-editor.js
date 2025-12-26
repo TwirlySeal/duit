@@ -122,16 +122,16 @@ function submitTask() {
   const input = nameInput.textContent;
 
   let start = datetime.start - 1;
-  for (; start <= 0; start--) {
-    if (input[start] !== ' ') break;
+  while (start >= 0 && input[start] === ' ') {
+    start--;
   }
 
   let end = datetime.end;
-  for (; end < input.length; end++) {
-    if (input[end] !== ' ') break;
+  while (end < input.length && input[end] === ' ') {
+    end++;
   }
 
-  const name = input.slice(0, start) + " " + input.slice(end);
+  const name = input.slice(0, start + 1) + " " + input.slice(end);
   
   addTask(name, datetime);
   reset();
