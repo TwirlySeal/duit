@@ -120,6 +120,38 @@ function inYears(n) {
   return PlainDate.fromDate(date);
 }
 
+/** @param {Date} date */
+function startOfDate(date) {
+  return new Date(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate(),
+  );
+}
+
+/** @arg {Date} date */
+export function formatDate(date) {
+  const today = startOfDate(new Date());
+  const target = startOfDate(date);
+
+  const diffTime = target - today;
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) {
+    return "Today";
+  } else if (diffDays === 1) {
+    return "Tomorrow";
+  } else if (diffDays > 0 && diffDays <= 7) {
+    return new Intl.DateTimeFormat("en-US", { weekday: "long" }).format(target);
+  } else {
+    return new Intl.DateTimeFormat("en-GB", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    }).format(target);
+  }
+}
+
 const keywords = new Map([
   ["sunday", 0],
   ["monday", 1],

@@ -1,5 +1,6 @@
 import { getTemplate } from "./js/domutils.js";
 import { getProjectId } from "./nav.js";
+import { formatDate } from "./js/dates.js";
 
 const main = document.querySelector('main');
 
@@ -21,7 +22,7 @@ for (const li of taskList.children) {
   if (time === null) continue;
 
   const date = new Date(time.dateTime);
-  time.textContent = date.toLocaleString();
+  time.textContent = formatDate(date);
 }
 
 /**
@@ -31,6 +32,7 @@ for (const li of taskList.children) {
 export async function showProject(id, name) {
   heading.textContent = name;
   document.title = name + " - Duit";
+
   /** @type {Task[]} */
   const data = await (await fetch("/api/projects/" + id)).json();
   taskList.replaceChildren(...data.map(t => taskView(t.title, t.id)));
