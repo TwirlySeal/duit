@@ -164,27 +164,37 @@ export function parseDate(str) {
   }
 }
 
-/** @param {PlainDate} date */
+/** @param {FloatingDate} date */
 export function formatDate(date) {
   const diffDays = PlainDate.daysBetween(
     PlainDate.fromDate(new Date()),
-    date
+    date.date
   );
 
-  const dateUTC = new Date(date.toUTC());
+  const dateUTC = new Date(date.date.toUTC());
+
+  /** @type {string} */
+  let datePart;
 
   if (diffDays === 0) {
-    return "Today";
+    datePart = "Today";
   } else if (diffDays === 1) {
-    return "Tomorrow";
+    datePart = "Tomorrow";
   } else if (diffDays > 0 && diffDays <= 7) {
-    return new Intl.DateTimeFormat("en-US", { weekday: "long" }).format(dateUTC);
+    datePart = new Intl.DateTimeFormat("en-US", { weekday: "long" }).format(dateUTC);
   } else {
-    return new Intl.DateTimeFormat("en-GB", {
+    datePart = new Intl.DateTimeFormat("en-GB", {
       day: "numeric",
       month: "short",
       year: "numeric",
     }).format(dateUTC);
+  }
+
+  if (date.time) {
+    const {hour, minute} = date.time;
+    return `${datePart} ${formatNumber(hour, 2)}:${formatNumber(minute, 2)}`
+  } else {
+    return datePart;
   }
 }
 
@@ -223,9 +233,9 @@ function isNumber(code) {
 /** @typedef {{
   start: number;
   end: number;
-}} Range */
+}} OffsetRange */
 
-/** @typedef { Range & {
+/** @typedef { OffsetRange & {
   kind: number;
   value: number;
 }} Token */
@@ -286,7 +296,7 @@ function* tokens(text) {
   }
 }
 
-/** @typedef { Range & FloatingDate } DatetimeExpr */
+/** @typedef { OffsetRange & FloatingDate } DatetimeExpr */
 
 /**
   Prematurely-optimised iterative LL(1) parser

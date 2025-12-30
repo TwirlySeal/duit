@@ -6,16 +6,13 @@ import { PlainDate, PlainTime } from "./js/dates.js";
 const main = document.querySelector('main');
 const taskTempl = getTemplate(main.querySelector('template'));
 
-/** @typedef {{
-  id: number;
-  title: string;
-  done: boolean;
-  date: PlainDate?;
-  time: PlainTime?;
-}} Task */
-
 /**
-  @param {Task} task
+  @param {{
+    id: number;
+    title: string;
+    date?: PlainDate;
+    time?: PlainTime;
+  }} task
 */
 function taskView(task) {
   const clone = taskTempl();
@@ -24,9 +21,9 @@ function taskView(task) {
 
   /** @type {HTMLTimeElement} */
   const time = clone.querySelector('time');
-  if (task.date !== null) {
+  if (task.date) {
     time.dateTime = task.date.toString();
-    time.textContent = formatDate(task.date);
+    time.textContent = formatDate(task);
   } else {
     time.remove();
   }
@@ -38,13 +35,8 @@ const heading = main.querySelector('h1');
 const taskList = document.getElementById('task-list');
 
 // Insert human-readable text for dates from server
-for (const li of taskList.children) {
-  /** @type {HTMLTimeElement?} */
-  const time = li.querySelector('time');
-  if (time === null) continue;
-
-  const floatingDate = parseDate(time.dateTime);
-  time.textContent = formatDate(floatingDate.date);
+for (const time of taskList.querySelectorAll('time')) {
+  time.textContent = formatDate(parseDate(time.dateTime));
 }
 
 /**
@@ -55,7 +47,12 @@ export async function showProject(id, name) {
   heading.textContent = name;
   document.title = name + " - Duit";
 
-  /** @type {Task[]} */
+  /** @type {{
+    id: number,
+    title: string,
+    date: string?,
+    time: string?,
+  }[]} */
   const data = await (await fetch("/api/projects/" + id)).json();
   taskList.replaceChildren(...data.map(task => {
     if (task.date) {
@@ -66,33 +63,23 @@ export async function showProject(id, name) {
 }
 
 /**
-  @param {import("./js/dates.js").DatetimeExpr} datetime
+  @param {{
+    title: string;
+    date?: PlainDate;
+    time?: PlainTime;
+  }} task
 */
-export async function addTask(title, datetime) {
-  const task = {
-    title,
-    projectId: getProjectId()
-  };
-
-  if (datetime !== null) {
-    task.date = datetime.date;
-
-    if (datetime.time !== null) {
-      task.time = datetime.time;
-    }
-  }
+export async function addTask(task) {
+  task.projectId = getProjectId();
 
   const { id } = await (await fetch("/api/tasks", {
     method: "POST",
     body: JSON.stringify(task)
   })).json();
 
-  taskList.append(taskView({
-    ...task,
-    id,
-    date: datetime.date,
-    time: datetime.time,
-  }));
+  task.id = id;
+
+  taskList.append(taskView(task));
 }
 
 /** @arg {number} id */

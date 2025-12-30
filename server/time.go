@@ -21,8 +21,6 @@ const (
 	microsecondsPerHour    = 60 * microsecondsPerMinute
 	microsecondsPerDay     = 24 * microsecondsPerHour
 	microsecondsPerMonth   = 30 * microsecondsPerDay
-
-	maxRepresentableByTime = 24*60*60*1000000 - 1
 )
 
 type Time struct{ civil.Time }
@@ -32,6 +30,8 @@ func (t *Time) ScanTime(v pgtype.Time) error {
 	if !v.Valid {
 		return fmt.Errorf("cannot scan NULL into *civil.Time")
 	}
+
+	const maxRepresentableByTime = 24*60*60*1000000 - 1
 
 	if v.Microseconds > maxRepresentableByTime {
 		return fmt.Errorf("%d microseconds cannot be represented as civil.Time", v.Microseconds)

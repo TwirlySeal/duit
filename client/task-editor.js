@@ -2,6 +2,8 @@ import { getSwapper } from "./js/domutils.js";
 import { parseTaskName } from "./js/dates.js";
 import { addTask } from "./tasks.js";
 
+/** @typedef {import("./js/dates.js").OffsetRange} OffsetRange */
+
 const showButton = document.getElementById("show-task-editor");
 const taskEditor = document.getElementById("task-editor");
 const nameInput = document.getElementById("name-input");
@@ -18,7 +20,7 @@ function clearNameInput() {
 }
 clearNameInput();
 
-/** @param {import("./js/dates.js").Range} range */
+/** @param {OffsetRange} range */
 function selectRange({start, end}) {
   const range = new Range();
 
@@ -53,7 +55,7 @@ function selectRange({start, end}) {
 
 /**
   start will be greater than end for backwards selections
-  @returns {OffsetRange | null}
+  @returns {OffsetRange?}
 */
 function selectionToRange() {
   const sel = getSelection();
@@ -74,7 +76,7 @@ function selectionToRange() {
   return { start, end };
 }
 
-/** @type {import("./js/dates.js").DatetimeExpr} */
+/** @type {import("./js/dates.js").DatetimeExpr?} */
 let datetime = null;
 
 nameInput.addEventListener('input', () => {
@@ -105,7 +107,9 @@ nameInput.addEventListener('input', () => {
     break; // temporary until other highlight types are added
   }
 
-  selectRange(sel);
+  if (sel !== null) {
+    selectRange(sel);
+  }
 });
 
 function reset() {
@@ -114,32 +118,34 @@ function reset() {
 }
 
 function submitTask() {
-  let name = nameInput.textContent.trim();
+  let title = nameInput.textContent;
 
   if (datetime === null) {
-    addTask(name, null);
-    return;
-  }
-
-  let start = datetime.start - 1;
-  while (start >= 0 && name[start] === ' ') {
-    start--;
-  }
-
-  let end = datetime.end;
-  while (end < name.length && name[end] === ' ') {
-    end++;
-  }
-
-  if (datetime.start === 0) {
-    name = name.slice(end);
-  } else if (datetime.end === name.length) {
-    name = name.slice(0, start + 1);
+    addTask({ title });
   } else {
-    name = name.slice(0, start + 1) + " " + name.slice(end);
+    let start = datetime.start - 1;
+    while (start >= 0 && title[start] === ' ') {
+      start--;
+    }
+
+    let end = datetime.end;
+    while (end < title.length && title[end] === ' ') {
+      end++;
+    }
+
+    if (datetime.start === 0) {
+      title = title.slice(end);
+    } else if (datetime.end === title.length) {
+      title = title.slice(0, start + 1);
+    } else {
+      title = title.slice(0, start + 1) + " " + title.slice(end);
+    }
+
+    addTask({
+      title: title.trim(), ...datetime
+    });
   }
-  
-  addTask(name, datetime);
+
   reset();
 }
 
