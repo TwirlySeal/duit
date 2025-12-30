@@ -18,12 +18,7 @@ function clearNameInput() {
 }
 clearNameInput();
 
-/** @typedef {{
-  start: number;
-  end: number;
-}} OffsetRange */
-
-/** @param {OffsetRange} range */
+/** @param {import("./js/dates.js").Range} range */
 function selectRange({start, end}) {
   const range = new Range();
 

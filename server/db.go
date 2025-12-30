@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"strings"
-	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -15,17 +14,17 @@ import (
 type Task struct {
 	Id int `json:"id"`
 	Title string `json:"title"`
-	Date *time.Time `json:"date"`
-	Time *time.Time `json:"time"`
+	Date *Date `json:"date"`
+	Time *Time `json:"time"`
 }
 
 func (t Task) FormatDate() string {
-	datePart := t.Date.Format(time.DateOnly)
+	datePart := t.Date.String()
 	if t.Time == nil {
 		return datePart
 	}
 
-	return datePart + "T" + t.Time.Format(time.TimeOnly)
+	return datePart + " " + t.Time.String()
 }
 
 type Project struct {

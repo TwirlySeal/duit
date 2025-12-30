@@ -1,14 +1,36 @@
 import { getTemplate } from "./js/domutils.js";
 import { getProjectId } from "./nav.js";
-import { formatDate } from "./js/dates.js";
+import { parseDate, formatDate } from "./js/dates.js";
+import { PlainDate, PlainTime } from "./js/dates.js";
 
 const main = document.querySelector('main');
-
 const taskTempl = getTemplate(main.querySelector('template'));
-function taskView(title, id) {
+
+/** @typedef {{
+  id: number;
+  title: string;
+  done: boolean;
+  date: PlainDate?;
+  time: PlainTime?;
+}} Task */
+
+/**
+  @param {Task} task
+*/
+function taskView(task) {
   const clone = taskTempl();
-  clone.firstElementChild.dataset.id = id;
-  clone.querySelector('p').textContent = title;
+  clone.firstElementChild.dataset.id = task.id;
+  clone.querySelector('p').textContent = task.title;
+
+  /** @type {HTMLTimeElement} */
+  const time = clone.querySelector('time');
+  if (task.date !== null) {
+    time.dateTime = task.date.toString();
+    time.textContent = formatDate(task.date);
+  } else {
+    time.remove();
+  }
+
   return clone;
 }
 
@@ -21,46 +43,56 @@ for (const li of taskList.children) {
   const time = li.querySelector('time');
   if (time === null) continue;
 
-  const date = new Date(time.dateTime);
-  time.textContent = formatDate(date);
+  const floatingDate = parseDate(time.dateTime);
+  time.textContent = formatDate(floatingDate.date);
 }
 
 /**
- * @arg {number} id
- * @typedef {{title: string, done: boolean}} Task
- */
+ @param {number} id
+ @param {string} name
+*/
 export async function showProject(id, name) {
   heading.textContent = name;
   document.title = name + " - Duit";
 
   /** @type {Task[]} */
   const data = await (await fetch("/api/projects/" + id)).json();
-  taskList.replaceChildren(...data.map(t => taskView(t.title, t.id)));
+  taskList.replaceChildren(...data.map(task => {
+    if (task.date) {
+      Object.assign(task, parseDate(task.date));
+    }
+    return taskView(task);
+  }));
 }
 
 /**
   @param {import("./js/dates.js").DatetimeExpr} datetime
 */
 export async function addTask(title, datetime) {
-  const body = {
+  const task = {
     title,
     projectId: getProjectId()
   };
 
   if (datetime !== null) {
-    body.date = datetime.date;
+    task.date = datetime.date;
 
     if (datetime.time !== null) {
-      body.time = datetime.time;
+      task.time = datetime.time;
     }
   }
 
   const { id } = await (await fetch("/api/tasks", {
     method: "POST",
-    body: JSON.stringify(body)
+    body: JSON.stringify(task)
   })).json();
 
-  taskList.append(taskView(title, id));
+  taskList.append(taskView({
+    ...task,
+    id,
+    date: datetime.date,
+    time: datetime.time,
+  }));
 }
 
 /** @arg {number} id */

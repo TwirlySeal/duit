@@ -3,6 +3,7 @@ module duit
 go 1.25.0
 
 require (
+	cloud.google.com/go v0.123.0
 	github.com/BurntSushi/toml v1.6.0
 	github.com/andybalholm/brotli v1.2.0
 	github.com/jackc/pgx/v5 v5.7.5

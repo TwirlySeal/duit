@@ -10,15 +10,15 @@ function formatNumber(number, length) {
   Immutable calendar date without a time component.
   Months are 1-indexed.
 */
-class PlainDate {
+export class PlainDate {
   #year;
   #month;
   #day;
 
   /**
-    @arg {number} year
-    @arg {number} month
-    @arg {number} day
+    @param {number} year
+    @param {number} month
+    @param {number} day
   */
   constructor(year, month, day) {
     this.#day = day;
@@ -38,7 +38,18 @@ class PlainDate {
     return this.#year;
   }
 
-  /** @arg {Date} date */
+  toString() {
+    const y = formatNumber(this.#year, 4);
+    const m = formatNumber(this.#month, 2);
+    const d = formatNumber(this.#day, 2);
+    return `${y}-${m}-${d}`;
+  }
+
+  toJSON() {
+    return this.toString();
+  }
+
+  /** @param {Date} date */
   static fromDate(date) {
     return new PlainDate(
       date.getFullYear(),
@@ -47,16 +58,25 @@ class PlainDate {
     );
   }
 
-  toJSON() {
-    const y = formatNumber(this.#year, 4);
-    const m = formatNumber(this.#month, 2);
-    const d = formatNumber(this.#day, 2);
-    return `${y}-${m}-${d}`;
+  toUTC() {
+    return Date.UTC(this.#year, this.#month - 1, this.#day)
+  }
+
+  /**
+    @param {PlainDate} d1
+    @param {PlainDate} d2
+  */
+  static daysBetween(d1, d2) {
+    const date1 = d1.toUTC();
+    const date2 = d2.toUTC();
+
+    const msPerDay = 24 * 60 * 60 * 1000;
+    return Math.round((date2 - date1) / msPerDay);
   }
 }
 
 /** Immutable time without a date component */
-class PlainTime {
+export class PlainTime {
   #hour;
   #minute;
   #second;
@@ -92,6 +112,11 @@ class PlainTime {
   }
 }
 
+/** @typedef {{
+  date: PlainDate;
+  time?: PlainTime;
+}} FloatingDate */
+
 function nextDay(day) {
   const date = new Date();
   let daysUntil = (day - date.getDay() + 7) % 7;
@@ -120,35 +145,46 @@ function inYears(n) {
   return PlainDate.fromDate(date);
 }
 
-/** @param {Date} date */
-function startOfDate(date) {
-  return new Date(
-    date.getFullYear(),
-    date.getMonth(),
-    date.getDate(),
-  );
+/**
+  @param {string} str
+  @returns {FloatingDate}
+*/
+export function parseDate(str) {
+  if (str.length > 10) {
+    const [year, month, day, hour, minute, second] = str.split(/[- :]/).map(Number);
+    return {
+      date: new PlainDate(year, month, day),
+      time: new PlainTime(hour, minute, second),
+    }
+  } else {
+    const [year, month, day] = str.split('-').map(Number);
+    return {
+      date: new PlainDate(year, month, day),
+    }
+  }
 }
 
-/** @arg {Date} date */
+/** @param {PlainDate} date */
 export function formatDate(date) {
-  const today = startOfDate(new Date());
-  const target = startOfDate(date);
+  const diffDays = PlainDate.daysBetween(
+    PlainDate.fromDate(new Date()),
+    date
+  );
 
-  const diffTime = target - today;
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  const dateUTC = new Date(date.toUTC());
 
   if (diffDays === 0) {
     return "Today";
   } else if (diffDays === 1) {
     return "Tomorrow";
   } else if (diffDays > 0 && diffDays <= 7) {
-    return new Intl.DateTimeFormat("en-US", { weekday: "long" }).format(target);
+    return new Intl.DateTimeFormat("en-US", { weekday: "long" }).format(dateUTC);
   } else {
     return new Intl.DateTimeFormat("en-GB", {
       day: "numeric",
       month: "short",
       year: "numeric",
-    }).format(target);
+    }).format(dateUTC);
   }
 }
 
@@ -174,25 +210,28 @@ const keywords = new Map([
   ["pm", 15]
 ]);
 
-/** @arg {number} code */
+/** @param {number} code */
 function isLetter(code) {
   return (code >= 97 && code <= 122) || (code >= 65 && code <= 90);
 }
 
-/** @arg {number} code */
+/** @param {number} code */
 function isNumber(code) {
   return code >= 49 && code <= 57;
 }
 
 /** @typedef {{
-  kind: number;
-  value: number;
   start: number;
   end: number;
+}} Range */
+
+/** @typedef { Range & {
+  kind: number;
+  value: number;
 }} Token */
 
 /**
-  @arg {string} text
+  @param {string} text
   @yields {Token}
 */
 function* tokens(text) {
@@ -247,19 +286,11 @@ function* tokens(text) {
   }
 }
 
-/** @typedef {{
-  start: number;
-  end: number;
-}} ExprBase */
-
-/** @typedef { ExprBase & {
-  date: PlainDate;
-  time?: PlainTime;
-}} DatetimeExpr */
+/** @typedef { Range & FloatingDate } DatetimeExpr */
 
 /**
   Prematurely-optimised iterative LL(1) parser
-  @arg {string} text
+  @param {string} text
 */
 export function parseTaskName(text) {
   const iterator = tokens(text);
@@ -299,7 +330,7 @@ export function parseTaskName(text) {
   }
 
   /**
-    @arg {PlainDate} date
+    @param {PlainDate} date
   */
   function setDate(plainDate, start = token.start) {
     if (block === 1) {
@@ -318,7 +349,7 @@ export function parseTaskName(text) {
   }
 
   /**
-    @arg {PlainTime} plainTime
+    @param {PlainTime} plainTime
   */
   function setTime(plainTime, start = token.start) {
     if (block === 2) {
