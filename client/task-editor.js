@@ -26,7 +26,7 @@ function selectRange({start, end}) {
 
   let current = 0;
   let found = 0;
-  for (const node of nameInput.childNodes) {    
+  for (const node of nameInput.childNodes) {
     const textNode = node.firstChild ?? node;
     const len = textNode.textContent.length;
     const currentEnd = current + len;
