@@ -10,8 +10,8 @@ const taskTempl = getTemplate(main.querySelector('template'));
   @param {{
     id: number;
     title: string;
-    date?: PlainDate;
-    time?: PlainTime;
+    date?: PlainDate?;
+    time?: PlainTime?;
   }} task
 */
 function taskView(task) {
