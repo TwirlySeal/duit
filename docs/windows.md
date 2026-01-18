@@ -41,18 +41,22 @@ psql -U postgres -f .\setup.sql
 
 7. Make a script to set the `POSTGRES_URL` environment variable.
 
-a. Create a directory called 'scripts' in the root of the project (`scripts/` is in `.gitignore`)
+    a. Create a directory called 'scripts' in the root of the project (`scripts/` is in `.gitignore`)
 
-b. Add a file inside called 'postgres_url.ps1' with the following content:
-```powershell
-$env:POSTGRES_URL = "postgres://postgres@localhost/duit"
-```
-c. Run the script.
-```powershell
-. .\scripts\postgres_url.ps1
-```
+    b. Add a file inside called 'postgres_url.ps1' with the following content:
+    ```powershell
+    $env:POSTGRES_URL = "postgres://postgres@localhost/duit"
+    ```
+    c. Run the script.
+    ```powershell
+    . .\scripts\postgres_url.ps1
+    ```
 
-----
+    ----
+7.1. Create a file called `.env.toml` in the server folder.
+    a. Add `POSTGRES_URL = "postgres://postgres@localhost/duit"`
+    b. Save the file.
+
 
 8. Enter the 'server' directory and run the Go server.
 ```powershell
