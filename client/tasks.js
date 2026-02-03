@@ -1,6 +1,6 @@
 import { getTemplate } from "./js/domutils.js";
 import { getProjectId } from "./nav.js";
-import { parseDate, formatDate } from "./js/dates.js";
+import { parseDate, parseTime, parseDateTime, formatDate } from "./js/dates.js";
 import { PlainDate, PlainTime } from "./js/dates.js";
 
 const main = document.querySelector('main');
@@ -8,27 +8,47 @@ const taskTempl = getTemplate(main.querySelector('template'));
 
 /**
   @param {{
-    id: number;
-    title: string;
+    id?: number;
+    title?: string;
     date?: PlainDate?;
     time?: PlainTime?;
   }} task
 */
-function taskView(task) {
-  const clone = taskTempl();
-  clone.firstElementChild.dataset.id = task.id;
-  clone.querySelector('p').textContent = task.title;
+function taskView(task, view = taskTempl()) {
+  for (const key of Object.keys(task)) {
+    switch (key) {
+      case "id":
+        view.firstElementChild.dataset.id = task.id;
+        break;
 
-  /** @type {HTMLTimeElement} */
-  const time = clone.querySelector('time');
-  if (task.date) {
-    time.dateTime = task.date.toString();
-    time.textContent = formatDate(task);
-  } else {
-    time.remove();
+      case "title":
+        view.querySelector('p').textContent = task.title;
+        break;
+
+      case "date":
+        /** @type {HTMLTimeElement?} */
+        let time = view.querySelector('time');
+        const addTime = !time;
+        if (addTime) {
+          time = document.createElement('time');
+        }
+
+        if (task.date === null) {
+          time.remove();
+        } else {
+          time.dateTime = task.date.toString();
+          time.textContent = formatDate(task);
+        }
+
+        if (addTime) {
+          view.querySelector('div').append(time);
+        }
+        
+        break;
+    }
   }
 
-  return clone;
+  return view;
 }
 
 const heading = main.querySelector('h1');
@@ -36,7 +56,7 @@ const taskList = document.getElementById('task-list');
 
 // Insert human-readable text for dates from server
 for (const time of taskList.querySelectorAll('time')) {
-  time.textContent = formatDate(parseDate(time.dateTime));
+  time.textContent = formatDate(parseDateTime(time.dateTime));
 }
 
 /**
@@ -56,7 +76,11 @@ export async function showProject(id, name) {
   const data = await (await fetch("/api/projects/" + id)).json();
   taskList.replaceChildren(...data.map(task => {
     if (task.date) {
-      Object.assign(task, parseDate(task.date));
+      task.date = parseDate(task.date);
+
+      if (task.time) {
+        task.time = parseTime(task.time);
+      }
     }
     return taskView(task);
   }));

@@ -37,7 +37,7 @@ func main() {
 }
 
 func html(mux *http.ServeMux, dbPool *pgxpool.Pool) {
-	tmpl := template.Must(template.ParseFiles("../client/home.html"))
+	tmpl := template.Must(template.ParseFiles("./client/home.html"))
 
 	mux.HandleFunc("GET /{id}", func(w http.ResponseWriter, r *http.Request) {
 		id, err := strconv.Atoi(r.PathValue("id"))

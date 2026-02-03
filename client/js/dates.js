@@ -149,7 +149,7 @@ function inYears(n) {
   @param {string} str
   @returns {FloatingDate}
 */
-export function parseDate(str) {
+export function parseDateTime(str) {
   if (str.length > 10) {
     const [year, month, day, hour, minute, second] = str.split(/[- :]/).map(Number);
     return {
@@ -157,11 +157,28 @@ export function parseDate(str) {
       time: new PlainTime(hour, minute, second),
     }
   } else {
-    const [year, month, day] = str.split('-').map(Number);
     return {
-      date: new PlainDate(year, month, day),
+      date: parseDate(str),
     }
   }
+}
+
+/**
+  @param {string} str
+  @returns {PlainDate}
+*/
+export function parseDate(str) {
+  const [year, month, day] = str.split('-').map(Number);
+  return new PlainDate(year, month, day);
+}
+
+/**
+  @param {string} str
+  @returns {PlainTime}
+*/
+export function parseTime(str) {
+  const [hour, minute, second] = str.split(':').map(Number);
+  return new PlainTime(hour, minute, second)
 }
 
 /** @param {FloatingDate} date */

@@ -1,0 +1,13 @@
+out_dir = "output"
+
+js_files = [
+  "client/nav.js"
+]
+
+css_files = [
+  "client/global.css"
+]
+
+html_files = [
+  "client/home.html"
+]
