@@ -23,16 +23,6 @@ type Config struct {
 	CssFiles []string `toml:"css_files"`
 
 	HtmlFiles []string `toml:"html_files"`
-
-	// JS struct {
-	// 	EntryPoints []string `toml:"entry_points"`
-	// 	Minify bool `toml:"minify"`
-	// 	Bundle bool `toml:"bundle"`
-	// } `toml:"js"`
-
-	// HTML struct {
-	// 	SourceDir string `toml:"source_dir"`
-	// }
 }
 
 func main() {

@@ -33,13 +33,7 @@ func api(dbPool *pgxpool.Pool) *http.ServeMux {
 
 		w.Header().Set("Content-Type", "application/json")
 
-		encoder := selectEncoding(w, r)
-		if encoder == nil {
-			w.Write(response)
-		} else {
-			encoder.Write(response)
-			encoder.Close()
-		}
+		w.Write(response)
 	})
 
 	mux.HandleFunc("POST /tasks", func(w http.ResponseWriter, r *http.Request) {
@@ -65,15 +59,9 @@ func api(dbPool *pgxpool.Pool) *http.ServeMux {
 		}
 
 		w.Header().Set("Content-Type", "application/json")
-		encoder := selectEncoding(w, r)
 		w.WriteHeader(http.StatusCreated)
 
-		if encoder == nil {
-			w.Write(response)
-		} else {
-			encoder.Write(response)
-			encoder.Close()
-		}
+		w.Write(response)
 	})
 
 	mux.HandleFunc("PATCH /tasks", func(w http.ResponseWriter, r *http.Request) {

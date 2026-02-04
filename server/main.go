@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"strconv"
 
+	"duit/headers"
+
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/BurntSushi/toml"
 )
@@ -31,7 +33,7 @@ func main() {
 	mux := http.NewServeMux()
 
 	html(mux, dbPool)
-	mux.Handle("/api/", http.StripPrefix("/api", api(dbPool)))
+	mux.Handle("/api/", http.StripPrefix("/api", headers.Compress(api(dbPool))))
 
 	log.Fatal(http.ListenAndServe(":8080", mux))
 }
@@ -39,7 +41,7 @@ func main() {
 func html(mux *http.ServeMux, dbPool *pgxpool.Pool) {
 	tmpl := template.Must(template.ParseFiles("./client/home.html"))
 
-	mux.HandleFunc("GET /{id}", func(w http.ResponseWriter, r *http.Request) {
+	mux.Handle("GET /{id}", headers.Compress(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		id, err := strconv.Atoi(r.PathValue("id"))
 		if err != nil {
 			internalErr(w, err)
@@ -53,13 +55,8 @@ func html(mux *http.ServeMux, dbPool *pgxpool.Pool) {
 		}
 
 		w.Header().Set("Content-Type", "text/html")
-
-		encoder := selectEncoding(w, r)
-		if encoder == nil {
-			tmpl.Execute(w, pageData)
-		} else {
-			tmpl.Execute(encoder, pageData)
-			encoder.Close()
-		}
-	})
+		
+		
+		tmpl.Execute(w, pageData)
+	})))
 }
