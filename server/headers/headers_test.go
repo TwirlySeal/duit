@@ -10,31 +10,42 @@ func acceptEncoding(t *testing.T, s string, expectedEncoding uint8) {
 	}
 }
 
-func Test1(t *testing.T) {
+func TestBrotliLowQuality(t *testing.T) {
 	acceptEncoding(t, "gzip, deflate, br;q=0.5", gz)
 }
 
-func Test2(t *testing.T) {
+func TestGzipLowQuality(t *testing.T) {
 	acceptEncoding(t, "deflate, gzip;q=0.5", deflate)
 }
 
-func Test3(t *testing.T) {
+func TestRejectElse(t *testing.T) {
 	acceptEncoding(t, "gzip;q=1.0, identity;q=0.5, *;q=0", gz)
 }
 
-func Test4(t *testing.T) {
+func TestGzipElse(t *testing.T) {
 	acceptEncoding(t, "gzip, *", zs)
 }
 
-func Test5(t *testing.T) {
+func TestNoValidEncoding(t *testing.T) {
 	acceptEncoding(t, "gzip;q=0, *;q=0", 0)
 }
 
-// fails
-// func Test6(t *testing.T) {
-	// acceptEncoding(t, "br;q=0.4, gzip; q=0.8", gz)
-// }
+func TestNoSpaces(t *testing.T) {
+	acceptEncoding(t, "gzip,br", br)
+}
 
-func Test7(t *testing.T) {
+func TestSpaceAfterSemicolon(t *testing.T) {
+ acceptEncoding(t, "br;q=0.4, gzip; q=0.8", gz)
+}
+
+func TestBrowserValue(t *testing.T) {
 	acceptEncoding(t, "gzip, deflate, br, zstd", zs)
+}
+
+func TestQualityTooHigh(t *testing.T) {
+	acceptEncoding(t, "gzip;q=3, br", br)
+}
+
+func TestQualityTooManyDecimalPlaces(t *testing.T) {
+	acceptEncoding(t, "zstd;=0.1111", 0)
 }

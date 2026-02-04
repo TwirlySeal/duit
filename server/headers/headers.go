@@ -20,8 +20,8 @@ const (
 	zs
 )
 
-// todo: handle variable whitespace and malformed header content
-type Parser struct {
+// https://httpwg.org/specs/rfc9110.html#field.accept-encoding
+type parser struct {
 	content string
 	bestEncoding uint8
 	bestWeight float32
@@ -30,14 +30,14 @@ type Parser struct {
 	precedences map[string]uint8
 }
 
-func New(content string, precedences map[string]uint8) *Parser {
-	return &Parser{
+func New(content string, precedences map[string]uint8) *parser {
+	return &parser{
 		content: content,
 		precedences: precedences,
 	}
 }
 
-func (p *Parser) addEncoding(name string, quality float32) {
+func (p *parser) addEncoding(name string, quality float32) {
 	precedence, found := p.precedences[name]
 	if !found || quality == 0 {
 		return
@@ -49,31 +49,56 @@ func (p *Parser) addEncoding(name string, quality float32) {
 	}
 }
 
-func (p *Parser) addParsedEncoding(name string, quality string) {
+// Encodings with invalid quality values are ignored
+func (p *parser) addParsedEncoding(name string, quality string) {
+	if len(quality) > 4 {
+		// "A sender of qvalue MUST NOT generate more than three digits
+		// after the decimal point."
+		return
+	}
+	
 	num, err := strconv.ParseFloat(quality, 32)
-	if err == nil {
+	if err == nil && num >= 0 && num <= 1 {
 		p.addEncoding(name, float32(num))
 	}
 }
 
-func (p *Parser) next() {
+func (p *parser) next() {
 	p.position++
 }
 
-func (p *Parser) slice() string {
+func (p *parser) slice() string {
 	return p.content[p.start:p.position]
 }
 
-func (p *Parser) currentByte() byte {
+func (p *parser) currentByte() byte {
 	return p.content[p.position]
 }
 
-func (p *Parser) isEnd() bool {
+func (p *parser) isEnd() bool {
 	return p.position == len(p.content)
 }
 
-func (p *Parser) Run() uint8 {
-	outer:
+func (p *parser) setStart() {
+	p.start = p.position
+}
+
+func (p *parser) skipSpace() {
+	for !p.isEnd() && (p.currentByte() == ' ' || p.currentByte() == '\t') {
+		p.next()
+	}
+	p.setStart()
+}
+
+// todo: fallback to identity or * if no valid encoding is specified but they are not prohibited
+func (p *parser) Run() uint8 {
+	if len(p.content) == 0 {
+		// "An Accept-Encoding header field with a field value that is empty
+		// implies that the user agent does not want any content coding in response."
+		return identity
+	}
+
+	mainLoop:
 	for {
 		if p.isEnd() {
 			p.addEncoding(p.slice(), 1.0)
@@ -81,26 +106,31 @@ func (p *Parser) Run() uint8 {
 		}
 
 		switch p.currentByte() {
-			case ',':
-				name := p.slice()
-				p.addEncoding(name, 1.0)
+			case ' ':
+				p.skipSpace()
 
-				p.position += 2 // skip ", "
-				p.start = p.position
+			case ',':
+				p.addEncoding(p.slice(), 1.0)
+				p.next()
+				p.skipSpace()
 
 			case ';':
 				name := p.slice()
-				p.position += 3 // skip ";q="
+				p.next()
+				p.skipSpace()
+	
+				// todo: handle malformed syntax here
+				p.position += 2 // skip "q="
 				p.start = p.position
 
 				for {
 					if p.isEnd() {
 						p.addParsedEncoding(name, p.slice())
-						break outer
+						break mainLoop
 					} else if p.currentByte() == ',' {
 						p.addParsedEncoding(name, p.slice())
-						p.position += 2 // skip ", "
-						p.start = p.position
+						p.next()
+						p.skipSpace()
 						break
 					}
 
@@ -122,9 +152,6 @@ var defaultPrecedences = map[string]uint8{
 	"*": zs,
 }
 
-// Select the optimal encoder from the 'Accept-Encoding' request header.
-// The 'Content-Encoding' header of the response is set to the selected encoding.
-
 type compressedResponseWriter struct {
 	writer http.ResponseWriter
 	encoder io.WriteCloser
@@ -145,10 +172,19 @@ func (c compressedResponseWriter) WriteHeader(statusCode int) {
 // todo: avoid compression for small responses
 func Compress(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		encoding := New(
-			r.Header.Get("Accept-Encoding"),
-			defaultPrecedences,
-		).Run()
+		acceptEncoding, exists := r.Header["Accept-Encoding"]
+
+		var encoding uint8
+		if exists {
+			encoding = New(
+				acceptEncoding[0],
+				defaultPrecedences,
+			).Run()
+		} else {
+			// "If no Accept-Encoding header field is in the request, any
+			// content coding is considered acceptable by the user agent."
+			encoding = zs
+		}
 
 		var encodingName string
 		var encoder io.WriteCloser
@@ -171,7 +207,8 @@ func Compress(next http.Handler) http.Handler {
 				return
 			default:
 				// no valid encoding
-				w.WriteHeader(http.StatusUnsupportedMediaType)
+				// https://httpwg.org/specs/rfc9110.html#conneg.absent
+				w.WriteHeader(http.StatusNotAcceptable)
 				return
 		}
 
